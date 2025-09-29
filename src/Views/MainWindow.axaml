@@ -1,0 +1,47 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:StickyNotes.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+
+        mc:Ignorable="d"
+        d:DesignWidth="300"
+        d:DesignHeight="400"
+
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaToDecorationsHint="True"
+
+        Icon="/Assets/stickynotes-logo.ico"
+        Title="StickyNotes"
+
+        x:Class="StickyNotes.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel">
+    
+    <Window.Styles>
+        <StyleInclude Source="/src/Styles/Styles.axaml" />
+    </Window.Styles>
+    
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Classes="MenuBar" x:Name="ClickDragPanel">
+            <Button
+                Classes="MenuButton"
+                Content="&#xF014;"
+                FontFamily="{StaticResource FontAwesome}"
+                Command="{Binding ConfirmDeleteNoteCommand}" />
+
+            <Button
+                Classes="MenuButton"
+                Content="&#x002B;"
+                FontFamily="{StaticResource FontAwesome}"
+                Command="{Binding CreateNoteCommand}" />
+        </StackPanel>
+
+        <TextBox
+            x:Name="MainInputBox"
+            Classes="MainInput"
+            Text="{Binding Body}"
+            AcceptsReturn="true"
+            TextWrapping="Wrap" />
+    </DockPanel>
+
+</Window>

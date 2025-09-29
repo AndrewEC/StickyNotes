@@ -1,0 +1,156 @@
+﻿namespace StickyNotes.ViewModels;
+
+using System.Reactive;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
+using ReactiveUI;
+using StickyNotes.Models;
+using StickyNotes.Utils;
+
+public partial class MainWindowViewModel : ViewModelBase
+{
+    private readonly ConsoleLogger<MainWindowViewModel> logger = new();
+    private readonly Note note;
+    private readonly Window parentWindow;
+    private readonly Panel clickDragPanel;
+
+    private bool canClose;
+    private bool mousePressed;
+    private Point? currentPoint;
+
+    private string body = string.Empty;
+
+    public MainWindowViewModel(Window parentWindow, Note note)
+    {
+        this.note = note;
+        this.parentWindow = parentWindow;
+
+        Body = note.Body;
+
+        logger.Log($"Initializing note window from note: [{note.Id}].");
+
+        parentWindow.Width = note.NoteWindowDimensions.Width;
+        parentWindow.Height = note.NoteWindowDimensions.Height;
+        parentWindow.Position = new(note.NoteWindowDimensions.X, note.NoteWindowDimensions.Y);
+        parentWindow.SizeChanged += OnWindowSizeChanged;
+        parentWindow.Closing += OnWindowClosing;
+
+        ConfirmDeleteNoteCommand = ReactiveCommand.Create(ConfirmDeleteNote);
+        CreateNoteCommand = ReactiveCommand.Create(CreateNote);
+
+        clickDragPanel = parentWindow.FindControl<Panel>("ClickDragPanel")!;
+        clickDragPanel.PointerPressed += OnPanelPointerPressed;
+        clickDragPanel.PointerReleased += OnPanelPointerReleased;
+        clickDragPanel.PointerMoved += OnPanelPointerMoved;
+    }
+
+    public string Body
+    {
+        get => body;
+        set
+        {
+            this.RaiseAndSetIfChanged(ref body, value);
+            note.Body = value;
+            Store.Instance.QueueUpdateNote(note);
+        }
+    }
+
+    public ReactiveCommand<Unit, Unit> ConfirmDeleteNoteCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> CreateNoteCommand { get; }
+
+    private void OnWindowClosing(object? sender, WindowClosingEventArgs e)
+    {
+        if (!canClose)
+        {
+            e.Cancel = true;
+        }
+    }
+
+    public void ForceCloseWindow()
+    {
+        canClose = true;
+        parentWindow.Close();
+    }
+
+    private void OnPanelPointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (!mousePressed || currentPoint == null)
+        {
+            return;
+        }
+
+        Point nextPoint = e.GetPosition(sender as Control);
+
+        double xChange = nextPoint.X - currentPoint.Value.X;
+        double yChange = nextPoint.Y - currentPoint.Value.Y;
+
+        parentWindow.Position = new(
+            (int)(parentWindow.Position.X + xChange),
+            (int)(parentWindow.Position.Y + yChange));
+    }
+
+    public void OnPanelPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        mousePressed = true;
+        currentPoint = e.GetPosition(sender as Control);
+    }
+
+    private void OnPanelPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        mousePressed = false;
+        currentPoint = null;
+
+        PersistNoteDimensions();
+    }
+
+    public void ForceSetPosition(int x, int y)
+    {
+        parentWindow.Position = new(x, y);
+        PersistNoteDimensions();
+    }
+
+    private void PersistNoteDimensions()
+    {
+        note.NoteWindowDimensions.X = parentWindow.Position.X;
+        note.NoteWindowDimensions.Y = parentWindow.Position.Y;
+        note.NoteWindowDimensions.Width = (int)parentWindow.Width;
+        note.NoteWindowDimensions.Height = (int)parentWindow.Height;
+        Store.Instance.QueueUpdateNote(note);
+    }
+
+    private void OnWindowSizeChanged(object? sender, SizeChangedEventArgs e)
+    {
+        if (sender != parentWindow)
+        {
+            return;
+        }
+
+        PersistNoteDimensions();
+    }
+
+    private async void ConfirmDeleteNote()
+    {
+        var result = await MessageBoxManager.GetMessageBoxStandard(
+            "Delete Note",
+            "Are you sure you want to delete this note? This action cannot be undone.",
+            ButtonEnum.YesNo)
+            .ShowAsync();
+
+        if (result != ButtonResult.Yes)
+        {
+            return;
+        }
+
+        Store.Instance.QueueDeleteNote(note);
+    }
+
+    private void CreateNote()
+    {
+        Note note = new();
+        Store.Instance.QueueUpdateNote(note);
+    }
+}

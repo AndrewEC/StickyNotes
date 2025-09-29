@@ -1,0 +1,43 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <Style Selector="Button.MenuButton">
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="10" />
+        <Setter Property="Background" Value="#FFCCFF" />
+
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#FFE6FF" />
+        </Style>
+    </Style>
+
+    <Style Selector="TextBox.MainInput">
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Background" Value="#FFE6FF" />
+        <Setter Property="SelectionBrush" Value="#FFA8B9FF" />
+
+        <Style Selector="^:pointerover">
+            <Style Selector="^ /template/ Border#PART_BorderElement">
+                <Setter Property="Background" Value="#FFE6FF" />
+            </Style>
+        </Style>
+
+        <Style Selector="^:focus">
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="BorderThickness" Value="0" />
+
+            <Style Selector="^ /template/ Border#PART_BorderElement">
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Background" Value="#FFE6FF" />
+            </Style>
+        </Style>
+    </Style>
+
+    <Style Selector="StackPanel.MenuBar">
+        <Setter Property="Background" Value="#FFCCFF" />
+        <Setter Property="Orientation" Value="Horizontal" />
+    </Style>
+
+</Styles>
