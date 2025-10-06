@@ -45,12 +45,7 @@ public class GlobalWatcher
 
         logger.Log($"Watching for changes in data directory: [{dataDir}].");
 
-        if (watcher != null)
-        {
-            watcher.EnableRaisingEvents = false;
-            watcher.Dispose();
-            watcher = null;
-        }
+        watcher?.Dispose();
 
         watcher = new(dataDir);
         watcher.Created += OnFileCreated;

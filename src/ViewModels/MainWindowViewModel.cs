@@ -1,5 +1,6 @@
 ﻿namespace StickyNotes.ViewModels;
 
+using System;
 using System.Reactive;
 using Avalonia;
 using Avalonia.Controls;
@@ -23,14 +24,20 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private string body = string.Empty;
 
+    private bool isColourOptionVisible;
+    private bool isPink;
+    private bool isBlue;
+    private bool isGreen;
+
     public MainWindowViewModel(Window parentWindow, Note note)
     {
         this.note = note;
         this.parentWindow = parentWindow;
 
         Body = note.Body;
+        SetNoteColour(note.ColourStyle);
 
-        logger.Log($"Initializing note window from note: [{note.Id}].");
+        logger.Log($"Initializing note window from note: [{note}].");
 
         parentWindow.Width = note.NoteWindowDimensions.Width;
         parentWindow.Height = note.NoteWindowDimensions.Height;
@@ -40,11 +47,37 @@ public partial class MainWindowViewModel : ViewModelBase
 
         ConfirmDeleteNoteCommand = ReactiveCommand.Create(ConfirmDeleteNote);
         CreateNoteCommand = ReactiveCommand.Create(CreateNote);
+        ToggleColourOptionCommand = ReactiveCommand.Create(ToggleColourOption);
+        SetNoteColourCommand = ReactiveCommand.Create<string>(SetNoteColour);
 
         clickDragPanel = parentWindow.FindControl<Panel>("ClickDragPanel")!;
         clickDragPanel.PointerPressed += OnPanelPointerPressed;
         clickDragPanel.PointerReleased += OnPanelPointerReleased;
         clickDragPanel.PointerMoved += OnPanelPointerMoved;
+    }
+
+    public bool IsColourOptionVisible
+    {
+        get => isColourOptionVisible;
+        set => this.RaiseAndSetIfChanged(ref isColourOptionVisible, value);
+    }
+
+    public bool IsPink
+    {
+        get => isPink;
+        set => this.RaiseAndSetIfChanged(ref isPink, value);
+    }
+
+    public bool IsBlue
+    {
+        get => isBlue;
+        set => this.RaiseAndSetIfChanged(ref isBlue, value);
+    }
+
+    public bool IsGreen
+    {
+        get => isGreen;
+        set => this.RaiseAndSetIfChanged(ref isGreen, value);
     }
 
     public string Body
@@ -61,6 +94,10 @@ public partial class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> ConfirmDeleteNoteCommand { get; }
 
     public ReactiveCommand<Unit, Unit> CreateNoteCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> ToggleColourOptionCommand { get; }
+
+    public ReactiveCommand<string, Unit> SetNoteColourCommand { get; }
 
     private void OnWindowClosing(object? sender, WindowClosingEventArgs e)
     {
@@ -148,9 +185,44 @@ public partial class MainWindowViewModel : ViewModelBase
         Store.Instance.QueueDeleteNote(note);
     }
 
-    private void CreateNote()
+    private void CreateNote() => Store.Instance.QueueCreateNote();
+
+    private void ToggleColourOption() => IsColourOptionVisible = !IsColourOptionVisible;
+
+    private void SetNoteColour(string value)
     {
-        Note note = new();
+        logger.Log($"Setting note colour to: [{value}]");
+
+        if (Enum.TryParse(value, out ColourStyles style))
+        {
+            SetNoteColour(style);
+        }
+        else
+        {
+            SetNoteColour(ColourStyles.Pink);
+        }
+    }
+
+    private void SetNoteColour(ColourStyles style)
+    {
+        IsPink = false;
+        IsBlue = false;
+        IsGreen = false;
+
+        switch (style)
+        {
+            case ColourStyles.Pink:
+                IsPink = true;
+                break;
+            case ColourStyles.Blue:
+                IsBlue = true;
+                break;
+            case ColourStyles.Green:
+                IsGreen = true;
+                break;
+        }
+
+        note.ColourStyle = style;
         Store.Instance.QueueUpdateNote(note);
     }
 }

@@ -1,12 +1,10 @@
 namespace StickyNotes.Utils;
 
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Timers;
-using Avalonia.Input;
 using StickyNotes.Models;
 
 public delegate void NoteCreated(Note note);
@@ -19,6 +17,7 @@ public sealed class Store
     public static readonly Store Instance = new();
 
     private static readonly object SyncLock = new();
+    private static readonly string CreateNewNoteInstructionId = "new_note_instruction";
 
     public event NoteCreated? OnNoteCreated;
     public event NoteDeleted? OnNoteDeleted;
@@ -66,6 +65,8 @@ public sealed class Store
             switch (instruction.Type)
             {
                 case UpdateInstruction.InstructionType.Create:
+                    ApplyCreateInstruction();
+                    break;
                 case UpdateInstruction.InstructionType.Update:
                     ApplyUpdateInstruction(instruction.Note);
                     break;
@@ -89,22 +90,26 @@ public sealed class Store
         }
     }
 
+    private void ApplyCreateInstruction()
+    {
+        logger.Log($"Creating new note.");
+
+        Note newNote = new();
+        while (DoesNoteIdExist(newNote))
+        {
+            newNote = new();
+        }
+
+        notes.Add((Note)newNote.Clone());
+        OnNoteCreated?.Invoke((Note)newNote.Clone());
+    }
+
     private void ApplyUpdateInstruction(Note note)
     {
         logger.Log($"Applying update instruction to note: [{note.Id}].");
 
         int index = notes.FindIndex(n => n.Id == note.Id);
-        if (index == -1)
-        {
-            logger.Log($"Note with id could not be found. New note will be created.");
-            Note newNote = new();
-            notes.Add(newNote);
-            OnNoteCreated?.Invoke(newNote);
-        }
-        else
-        {
-            notes[index] = (Note)note.Clone();
-        }
+        notes[index] = (Note)note.Clone();
     }
 
     private void ApplyDeleteInstruction(Note note)
@@ -132,6 +137,8 @@ public sealed class Store
                 return;
             }
 
+            isInitialized = true;
+
             logger.Log($"Loading notes from save file [{saveFilePath}].");
             if (!File.Exists(saveFilePath))
             {
@@ -145,13 +152,11 @@ public sealed class Store
                 logger.Log($"Loaded [{notes.Count}] notes from save file.");
             }
 
-            isInitialized = true;
-
             if (OnNoteCreated != null)
             {
                 foreach (Note note in notes)
                 {
-                    OnNoteCreated.Invoke(note);
+                    OnNoteCreated.Invoke((Note)note.Clone());
                 }
             }
         }
@@ -161,13 +166,7 @@ public sealed class Store
     {
         lock (SyncLock)
         {
-            Note note = new();
-            while (DoesNoteIdExist(note))
-            {
-                note = new();
-            }
-
-            pendingUpdates[note.Id] = new(UpdateInstruction.InstructionType.Create, note);
+            pendingUpdates[CreateNewNoteInstructionId] = new(UpdateInstruction.InstructionType.Create, new Note());
         }
     }
 
@@ -184,6 +183,12 @@ public sealed class Store
                     + "Update will be ignored.");
                 return;
             }
+            else if (IsNoteScheduledForCreation(note))
+            {
+                logger.Log($"An update for note [{note.Id}] was requested but it is in the process of being created. "
+                    + "Update will be ignored.");
+                return;
+            }
 
             pendingUpdates[note.Id] = new(UpdateInstruction.InstructionType.Update, (Note)note.Clone());
         }
@@ -192,6 +197,10 @@ public sealed class Store
     private bool IsNoteScheduledForDeletion(Note note)
         => pendingUpdates.TryGetValue(note.Id, out UpdateInstruction? existing)
             && existing.Type == UpdateInstruction.InstructionType.Delete;
+
+    private bool IsNoteScheduledForCreation(Note note)
+        => pendingUpdates.TryGetValue(note.Id, out UpdateInstruction? existing)
+            && existing.Type == UpdateInstruction.InstructionType.Create;
 
     public void QueueDeleteNote(Note note)
     {

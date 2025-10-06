@@ -22,26 +22,75 @@
     </Window.Styles>
     
     <DockPanel>
-        <StackPanel DockPanel.Dock="Top" Classes="MenuBar" x:Name="ClickDragPanel">
+        <StackPanel
+            DockPanel.Dock="Top"
+            Classes.MenuBarPink="{Binding IsPink}"
+            Classes.MenuBarBlue="{Binding IsBlue}"
+            Classes.MenuBarGreen="{Binding IsGreen}"
+            Classes="MenuBar"
+            x:Name="ClickDragPanel">
+
             <Button
+                Classes.MenuButtonPink="{Binding IsPink}"
+                Classes.MenuButtonBlue="{Binding IsBlue}"
+                Classes.MenuButtonGreen="{Binding IsGreen}"
                 Classes="MenuButton"
                 Content="&#xF014;"
                 FontFamily="{StaticResource FontAwesome}"
                 Command="{Binding ConfirmDeleteNoteCommand}" />
 
             <Button
+                Classes.MenuButtonPink="{Binding IsPink}"
+                Classes.MenuButtonBlue="{Binding IsBlue}"
+                Classes.MenuButtonGreen="{Binding IsGreen}"
                 Classes="MenuButton"
                 Content="&#x002B;"
                 FontFamily="{StaticResource FontAwesome}"
                 Command="{Binding CreateNoteCommand}" />
+            
+            <Button
+                Classes.MenuButtonPink="{Binding IsPink}"
+                Classes.MenuButtonBlue="{Binding IsBlue}"
+                Classes.MenuButtonGreen="{Binding IsGreen}"
+                Classes="MenuButton"
+                Content="&#xF150;"
+                FontFamily="{StaticResource FontAwesome}"
+                Command="{Binding ToggleColourOptionCommand}" />
         </StackPanel>
 
-        <TextBox
-            x:Name="MainInputBox"
-            Classes="MainInput"
-            Text="{Binding Body}"
-            AcceptsReturn="true"
-            TextWrapping="Wrap" />
+        <DockPanel>
+            <StackPanel
+                Orientation="Horizontal"
+                IsVisible="{Binding IsColourOptionVisible}"
+                Classes="ColourOptions"
+                DockPanel.Dock="Top">
+
+                <TextBlock Text="Note Colour: " />
+
+                <Button Classes="MenuButtonPink MenuButton"
+                    Command="{Binding SetNoteColourCommand}"
+                    CommandParameter="Pink" />
+
+                <Button Classes="MenuButtonBlue MenuButton"
+                    Command="{Binding SetNoteColourCommand}"
+                    CommandParameter="Blue" />
+
+                <Button Classes="MenuButtonGreen MenuButton"
+                    Command="{Binding SetNoteColourCommand}"
+                    CommandParameter="Green" />
+
+            </StackPanel>
+
+            <TextBox
+                Classes.MainInputPink="{Binding IsPink}"
+                Classes.MainInputBlue="{Binding IsBlue}"
+                Classes.MainInputGreen="{Binding IsGreen}"
+                Classes="MainInput"
+                x:Name="MainInputBox"
+                Text="{Binding Body}"
+                AcceptsReturn="true"
+                TextWrapping="Wrap" />
+        </DockPanel>
     </DockPanel>
 
 </Window>
