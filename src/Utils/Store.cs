@@ -104,6 +104,9 @@ public sealed class Store
         OnNoteCreated?.Invoke((Note)newNote.Clone());
     }
 
+    private bool DoesNoteIdExist(Note note)
+        => notes.Any(n => n.Id == note.Id);
+
     private void ApplyUpdateInstruction(Note note)
     {
         logger.Log($"Applying update instruction to note: [{note.Id}].");
@@ -139,6 +142,8 @@ public sealed class Store
 
             isInitialized = true;
 
+            Backup.BackupNotes();
+
             logger.Log($"Loading notes from save file [{saveFilePath}].");
             if (!File.Exists(saveFilePath))
             {
@@ -169,9 +174,6 @@ public sealed class Store
             pendingUpdates[CreateNewNoteInstructionId] = new(UpdateInstruction.InstructionType.Create, new Note());
         }
     }
-
-    private bool DoesNoteIdExist(Note note)
-        => notes.Any(n => n.Id == note.Id);
 
     public void QueueUpdateNote(Note note)
     {
@@ -206,6 +208,13 @@ public sealed class Store
     {
         lock (SyncLock)
         {
+            if (IsNoteScheduledForCreation(note))
+            {
+                logger.Log($"An deletion request for note [{note.Id}] was requested but the note is scheduled for creation. "
+                    + "Deletion request will be ignored.");
+                return;
+            }
+
             pendingUpdates[note.Id] = new(UpdateInstruction.InstructionType.Delete, (Note)note.Clone());
         }
     }
