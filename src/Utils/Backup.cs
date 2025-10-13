@@ -1,24 +1,31 @@
 namespace StickyNotes.Utils;
 
 using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 
-public sealed class Backup
+public sealed partial class Backup
 {
     private sealed class BackupSave(string path, DateTime backupDate)
     {
         public readonly string Path = path;
 
         public readonly DateTime BackupDate = backupDate;
+
+        public bool IsOlderThan(BackupSave other)
+            => BackupDate.CompareTo(other.BackupDate) < 0;
     }
 
     private static readonly ConsoleLogger<Backup> logger = new();
     private static readonly int MaxNumberOfBackups = 10;
-    private static readonly string JsonExtension = ".json";
-    private static readonly int BackupFileNameLength = 21;
     private static readonly int DateLength = 10;
+    private static readonly Regex BackupFileNameRegex = BackupFileNameRegexBuilder();
+
+    [GeneratedRegex(@"^notes-\d{4}-\d{2}-\d{2}\.json$")]
+    private static partial Regex BackupFileNameRegexBuilder();
 
     public static void BackupNotes()
     {
@@ -52,66 +59,38 @@ public sealed class Backup
 
     private static void TrimBackups()
     {
-        List<BackupSave> backups = FindBackups();
-        if (backups.Count <= MaxNumberOfBackups)
+        ImmutableArray<BackupSave> backups = FindBackups();
+        if (backups.Length <= MaxNumberOfBackups)
         {
             return;
         }
 
-        BackupSave oldest = backups[0];
-        for (int i = 1; i < backups.Count; i++)
+        logger.Log($"[{backups.Length}] backups found. Oldest will be deleted.");
+
+        BackupSave oldestBackup = backups[0];
+        for (int i = 1; i < backups.Length; i++)
         {
-            if (oldest.BackupDate.CompareTo(backups[i].BackupDate) > 0)
+            if (!oldestBackup.IsOlderThan(backups[i]))
             {
-                oldest = backups[i];
+                oldestBackup = backups[i];
             }
         }
 
-        logger.Log($"Deleting oldest backup file: [{oldest.Path}].");
+        logger.Log($"Deleting oldest backup file: [{oldestBackup.Path}].");
 
-        File.Delete(oldest.Path);
+        File.Delete(oldestBackup.Path);
     }
 
-    private static List<BackupSave> FindBackups()
-    {
-        string dataDir = StickyNotePaths.CreateAndGetDataDir();
-
-        List<BackupSave> backups = [];
-        foreach (string path in Directory.GetFiles(dataDir))
-        {
-            if (Path.GetExtension(path) != JsonExtension)
-            {
-                continue;
-            }
-
-            DateTime backupDate = ParseDateTime(path);
-            if (backupDate != default)
-            {
-                backups.Add(new BackupSave(path, backupDate));
-            }
-        }
-        return backups;
-    }
+    private static ImmutableArray<BackupSave> FindBackups()
+        => Directory.GetFiles(StickyNotePaths.CreateAndGetDataDir())
+            .Where(path => BackupFileNameRegex.IsMatch(Path.GetFileName(path)))
+            .Select(path => new BackupSave(path, ParseDateTime(path)))
+            .ToImmutableArray();
 
     private static DateTime ParseDateTime(string path)
     {
-        string fullFileName = Path.GetFileName(path);
-        if (fullFileName.Length < BackupFileNameLength)
-        {
-            return default;
-        }
-
         string fileName = Path.GetFileNameWithoutExtension(path);
         string dateComponent = fileName.Substring(fileName.Length - DateLength);
-
-        try
-        {
-            return DateTime.Parse(dateComponent, CultureInfo.InvariantCulture);
-        }
-        catch (Exception e)
-        {
-            logger.Log($"Failed to parse DateTime from file name: [{fileName}]. Cause: [{e.Message}].");
-            return default;
-        }
+        return DateTime.Parse(dateComponent, CultureInfo.InvariantCulture);
     }
 }

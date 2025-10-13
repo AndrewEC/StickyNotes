@@ -11,6 +11,7 @@ public static class StickyNotePaths
     public static readonly CompositeFormat BackupFileNameFormat = CompositeFormat.Parse("notes-{0}.json");
     public static readonly string RequestNewNoteFileName = "newnote";
     public static readonly string AppName = "StickyNotes";
+    private static readonly string BackupDateFormat = "yyyy-MM-dd";
 
     public static string CreateAndGetDataDir()
     {
@@ -30,7 +31,7 @@ public static class StickyNotePaths
 
     public static string GetTodaysBackupSaveFilePath()
     {
-        string dateString = DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        string dateString = DateTime.Now.ToString(BackupDateFormat, CultureInfo.InvariantCulture);
         string backupFileName = string.Format(CultureInfo.InvariantCulture, BackupFileNameFormat, dateString);
         return Path.Join(CreateAndGetDataDir(), backupFileName);
     }

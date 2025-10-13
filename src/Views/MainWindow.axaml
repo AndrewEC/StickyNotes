@@ -55,7 +55,18 @@
                 Classes="MenuButton"
                 Content="&#xF150;"
                 FontFamily="{StaticResource FontAwesome}"
-                Command="{Binding ToggleColourOptionCommand}" />
+                Command="{Binding ToggleColourOptionCommand}"
+                IsVisible="{Binding !IsColourOptionVisible}" />
+            
+            <Button
+                Classes.MenuButtonPink="{Binding IsPink}"
+                Classes.MenuButtonBlue="{Binding IsBlue}"
+                Classes.MenuButtonGreen="{Binding IsGreen}"
+                Classes="MenuButton"
+                Content="&#xF151;"
+                FontFamily="{StaticResource FontAwesome}"
+                Command="{Binding ToggleColourOptionCommand}"
+                IsVisible="{Binding IsColourOptionVisible}" />
         </StackPanel>
 
         <DockPanel>

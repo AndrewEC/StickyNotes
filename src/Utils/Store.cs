@@ -62,15 +62,15 @@ public sealed class Store
         logger.Log($"Applying [{pendingUpdates.Count}] note updates.");
         foreach (UpdateInstruction instruction in pendingUpdates.Values)
         {
-            switch (instruction.Type)
+            switch (instruction.UpdateType)
             {
-                case UpdateInstruction.InstructionType.Create:
+                case InstructionType.Create:
                     ApplyCreateInstruction();
                     break;
-                case UpdateInstruction.InstructionType.Update:
+                case InstructionType.Update:
                     ApplyUpdateInstruction(instruction.Note);
                     break;
-                case UpdateInstruction.InstructionType.Delete:
+                case InstructionType.Delete:
                     ApplyDeleteInstruction(instruction.Note);
                     break;
             }
@@ -171,7 +171,7 @@ public sealed class Store
     {
         lock (SyncLock)
         {
-            pendingUpdates[CreateNewNoteInstructionId] = new(UpdateInstruction.InstructionType.Create, new Note());
+            pendingUpdates[CreateNewNoteInstructionId] = new(InstructionType.Create, new Note());
         }
     }
 
@@ -192,17 +192,9 @@ public sealed class Store
                 return;
             }
 
-            pendingUpdates[note.Id] = new(UpdateInstruction.InstructionType.Update, (Note)note.Clone());
+            pendingUpdates[note.Id] = new(InstructionType.Update, (Note)note.Clone());
         }
     }
-
-    private bool IsNoteScheduledForDeletion(Note note)
-        => pendingUpdates.TryGetValue(note.Id, out UpdateInstruction? existing)
-            && existing.Type == UpdateInstruction.InstructionType.Delete;
-
-    private bool IsNoteScheduledForCreation(Note note)
-        => pendingUpdates.TryGetValue(note.Id, out UpdateInstruction? existing)
-            && existing.Type == UpdateInstruction.InstructionType.Create;
 
     public void QueueDeleteNote(Note note)
     {
@@ -210,12 +202,20 @@ public sealed class Store
         {
             if (IsNoteScheduledForCreation(note))
             {
-                logger.Log($"An deletion request for note [{note.Id}] was requested but the note is scheduled for creation. "
+                logger.Log($"A deletion request for note [{note.Id}] was requested but the note is scheduled for creation. "
                     + "Deletion request will be ignored.");
                 return;
             }
 
-            pendingUpdates[note.Id] = new(UpdateInstruction.InstructionType.Delete, (Note)note.Clone());
+            pendingUpdates[note.Id] = new(InstructionType.Delete, (Note)note.Clone());
         }
     }
+
+    private bool IsNoteScheduledForDeletion(Note note)
+        => pendingUpdates.TryGetValue(note.Id, out UpdateInstruction? existing)
+            && existing.UpdateType == InstructionType.Delete;
+
+    private bool IsNoteScheduledForCreation(Note note)
+        => pendingUpdates.TryGetValue(note.Id, out UpdateInstruction? existing)
+            && existing.UpdateType == InstructionType.Create;
 }
