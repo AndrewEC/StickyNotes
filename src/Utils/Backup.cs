@@ -27,11 +27,52 @@ public sealed partial class Backup
     [GeneratedRegex(@"^notes-\d{4}-\d{2}-\d{2}\.json$")]
     private static partial Regex BackupFileNameRegexBuilder();
 
+    public static bool RestoreNote()
+    {
+        ImmutableArray<BackupSave> backups = FindBackups();
+        if (backups.Length == 0)
+        {
+            return false;
+        }
+
+        string saveFilePath = StickyNotePaths.GetSaveFilePath();
+        if (File.Exists(saveFilePath))
+        {
+            try
+            {
+                File.Delete(saveFilePath);
+            }
+            catch (Exception e)
+            {
+                logger.Log($"Failed to restore backup because current save file could not be deleted. Cause: [{e}].");
+                return false;
+            }
+        }
+
+        File.Move(GetMostRecentBackup(backups).Path, saveFilePath);
+        
+        return true;
+    }
+
+    private static BackupSave GetMostRecentBackup(ImmutableArray<BackupSave> backups)
+    {
+        BackupSave recent = backups[0];
+        for (int i = 1; i < backups.Length; i++)
+        {
+            if (recent.IsOlderThan(backups[i]))
+            {
+                recent = backups[i];
+            }
+        }
+        return recent;
+    }
+
     public static void BackupNotes()
     {
         string saveFilePath = StickyNotePaths.GetSaveFilePath();
         if (!File.Exists(saveFilePath))
         {
+            logger.Log($"Save file could not be found at [{saveFilePath}]. No backup will be made.");
             return;
         }
 

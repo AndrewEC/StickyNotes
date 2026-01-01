@@ -13,7 +13,10 @@ public class GlobalWatcher
 
     private FileSystemWatcher? watcher;
 
-    private GlobalWatcher() { }
+    private GlobalWatcher()
+    {
+        AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
+    }
 
     public static bool IsStickyNotesAlreadyRunning()
         => Process.GetProcessesByName(StickyNotePaths.AppName).Length > 1;
@@ -39,6 +42,11 @@ public class GlobalWatcher
         }
     }
 
+    private void OnProcessExit(object? sender, EventArgs e)
+    {
+        watcher?.Dispose();
+    }
+
     public void WatchForChanges()
     {
         string dataDir = StickyNotePaths.CreateAndGetDataDir();
@@ -57,17 +65,28 @@ public class GlobalWatcher
     {
         logger.Log($"Detected new file created in data dir with path: [{e.FullPath}].");
 
-        if (IsFileIndicatingNewNoteShouldBeCreated(e.FullPath))
+        if (!IsFileIndicatingNewNoteShouldBeCreated(e.FullPath))
         {
-            logger.Log("Detected new note requested file in data dir. Creating new note.");
-
-            Store.Instance.QueueCreateNote();
-
-            // Call to dispose of the current file watcher and create a new one.
-            // This is to resolve an issue where the file watcher stops reporting
-            // changes for reasons unknown.
-            WatchForChanges();
+            return;
         }
+
+        logger.Log("Detected new note requested file in data dir. Creating new note.");
+
+        Store.Instance.QueueCreateNote();
+
+        try
+        {
+            File.Delete(e.FullPath);
+        }
+        catch (Exception ex)
+        {
+            logger.Log($"Failed to delete new note file. Cause: [{ex}].");
+        }
+
+        // Call to dispose of the current file watcher and create a new one.
+        // This is to resolve an issue where the file watcher stops reporting
+        // changes for reasons unknown.
+        WatchForChanges();
     }
 
     private static bool IsFileIndicatingNewNoteShouldBeCreated(string fullPath)

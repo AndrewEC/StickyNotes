@@ -1,5 +1,6 @@
 namespace StickyNotes.Utils;
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -142,8 +143,6 @@ public sealed class Store
 
             isInitialized = true;
 
-            Backup.BackupNotes();
-
             logger.Log($"Loading notes from save file [{saveFilePath}].");
             if (!File.Exists(saveFilePath))
             {
@@ -152,10 +151,17 @@ public sealed class Store
             }
             else
             {
-                string fileContents = File.ReadAllText(saveFilePath);
-                notes = JsonSerializer.Deserialize<List<Note>>(fileContents)!;
-                logger.Log($"Loaded [{notes.Count}] notes from save file.");
+                while (!TryLoadCurrentNotes())
+                {
+                    if (!Backup.RestoreNote())
+                    {
+                        notes = [new Note()];
+                        break;
+                    }
+                }
             }
+
+            Backup.BackupNotes();
 
             if (OnNoteCreated != null)
             {
@@ -164,6 +170,27 @@ public sealed class Store
                     OnNoteCreated.Invoke((Note)note.Clone());
                 }
             }
+        }
+    }
+
+    private bool TryLoadCurrentNotes()
+    {
+        try
+        {
+            string fileContents = File.ReadAllText(saveFilePath);
+            notes = JsonSerializer.Deserialize<List<Note>>(fileContents)!;
+            if (notes.Count == 0)
+            {
+                logger.Log("No notes found in save file. Defaulting to single empty note.");
+                notes = [new Note()];
+            }
+            logger.Log($"Loaded [{notes.Count}] notes from save file.");
+            return true;
+        }
+        catch (Exception e)
+        {
+            logger.Log($"Failed to load notes from JSON file. Cause: [{e}].");
+            return false;
         }
     }
 
