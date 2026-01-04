@@ -1,4 +1,4 @@
-﻿namespace StickyNotes.ViewModels;
+﻿namespace StickyNotes.Core.ViewModels;
 
 using ReactiveUI;
 

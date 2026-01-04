@@ -5,8 +5,8 @@ A bare bones sticky note implementation written in .NET Core.
 * Ability to create, delete, colour, and re-arrange sticky notes.
 * Notes are alt-tabbable.
 * Automated backup and restoration in case of corrupt data. (Local only.)
-    * Notes are save to a single local JSON file.
-* Taskbar icon to access useful functions to show or recover off screen notes.
+    * Notes are saved to a single local JSON file.
+* Taskbar icon to access useful functions such as recovering notes lost off screen.
 
 ### Screenshots
 
@@ -17,3 +17,4 @@ A bare bones sticky note implementation written in .NET Core.
 ### Dependencies
 * [Avalonia](https://github.com/AvaloniaUI/Avalonia)
 * [MessageBox.Avalonia](https://github.com/AvaloniaCommunity/MessageBox.Avalonia)
+* [Font-Awesome](https://github.com/FortAwesome/Font-Awesome)

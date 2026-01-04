@@ -1,4 +1,4 @@
-namespace StickyNotes.Models;
+namespace StickyNotes.Core.Models;
 
 using System;
 using System.Text;

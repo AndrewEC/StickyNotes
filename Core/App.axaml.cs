@@ -5,7 +5,7 @@ using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using StickyNotes.Utils;
+using StickyNotes.Core.Utils;
 
 public partial class App : Application
 {
@@ -65,9 +65,9 @@ public partial class App : Application
         Process.Start("explorer.exe", "/select," + StickyNotePaths.GetSaveFilePath());
     }
 
-    public void OnExitClicked(object? sender, EventArgs args)
+    public void OnCloseClicked(object? sender, EventArgs args)
     {
-        logger.Log("Exit tray menu clicked. Closing all windows.");
+        logger.Log("Close tray menu clicked. Closing all windows.");
         DoShutdownApp();
     }
 

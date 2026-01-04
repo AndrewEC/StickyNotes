@@ -1,4 +1,4 @@
-namespace StickyNotes.Utils;
+namespace StickyNotes.Core.Utils;
 
 using System;
 using System.Collections.Immutable;

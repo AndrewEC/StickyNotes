@@ -1,10 +1,10 @@
-namespace StickyNotes.Utils;
+namespace StickyNotes.Core.Utils;
 
 using System.Collections.Generic;
 using Avalonia.Threading;
-using StickyNotes.Models;
-using StickyNotes.ViewModels;
-using StickyNotes.Views;
+using StickyNotes.Core.Models;
+using StickyNotes.Core.ViewModels;
+using StickyNotes.Core.Views;
 
 public class WindowManager
 {

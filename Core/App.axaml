@@ -26,7 +26,7 @@
                         <NativeMenuItem Header="Reveal Notes" Click="OnRevealNotesClicked"/>
                         <NativeMenuItem Header="Cascade Notes" Click="OnCascadeClicked"/>
                         <NativeMenuItem Header="Show Data Folder" Click="OnShowDataFolderClicked"/>
-                        <NativeMenuItem Header="Exit" Click="OnExitClicked"/>
+                        <NativeMenuItem Header="Close Sticky Notes" Click="OnCloseClicked"/>
                     </NativeMenu>
                 </TrayIcon.Menu>
             </TrayIcon>

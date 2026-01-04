@@ -1,4 +1,4 @@
-﻿namespace StickyNotes.ViewModels;
+﻿namespace StickyNotes.Core.ViewModels;
 
 using System;
 using System.Reactive;
@@ -8,8 +8,8 @@ using Avalonia.Input;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
 using ReactiveUI;
-using StickyNotes.Models;
-using StickyNotes.Utils;
+using StickyNotes.Core.Models;
+using StickyNotes.Core.Utils;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
