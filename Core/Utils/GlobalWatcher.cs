@@ -42,10 +42,7 @@ public class GlobalWatcher
         }
     }
 
-    private void OnProcessExit(object? sender, EventArgs e)
-    {
-        watcher?.Dispose();
-    }
+    private void OnProcessExit(object? sender, EventArgs e) => watcher?.Dispose();
 
     public void WatchForChanges()
     {

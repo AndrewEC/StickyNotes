@@ -17,8 +17,12 @@ public sealed class Store
 {
     public static readonly Store Instance = new();
 
-    private static readonly object SyncLock = new();
+    private static readonly System.Threading.Lock SyncLock = new();
     private static readonly string CreateNewNoteInstructionId = "new_note_instruction";
+    private static readonly string LoadFailedMessage = "Your previous notes could not be loaded and all recovery attempts failed. "
+        + "The save file may have been corrupted or cannot be accessed.";
+    private static readonly string LoadRecoveredMessage = "You notes could not be loaded. "
+        + "A previous version of your notes was recovered and loaded instead.";
 
     public event NoteCreated? OnNoteCreated;
     public event NoteDeleted? OnNoteDeleted;
@@ -38,6 +42,97 @@ public sealed class Store
         timer.AutoReset = true;
         timer.Enabled = true;
         timer.Start();
+    }
+
+    public void Initialize()
+    {
+        lock (SyncLock)
+        {
+            if (isInitialized)
+            {
+                return;
+            }
+
+            isInitialized = true;
+
+            LoadStatus status = LoadStatus.Success;
+
+            logger.Log($"Loading notes from save file [{saveFilePath}].");
+            if (!File.Exists(saveFilePath))
+            {
+                logger.Log("Save file path not found. Defaulting to single empty note.");
+                notes = [new Note()];
+            }
+            else
+            {
+                status = LoadNotes(out notes);
+            }
+
+            Backup.BackupNotes();
+
+            if (status == LoadStatus.Failed)
+            {
+                notes.Add(new Note() { Body = LoadFailedMessage });
+            }
+            else if (status == LoadStatus.Recovered)
+            {
+                notes.Add(new Note() { Body = LoadRecoveredMessage });
+            }
+
+            if (OnNoteCreated != null)
+            {
+                foreach (Note note in notes)
+                {
+                    OnNoteCreated.Invoke((Note)note.Clone());
+                }
+            }
+        }
+    }
+
+    private LoadStatus LoadNotes(out List<Note> notes)
+    {
+        LoadStatus status = LoadStatus.Success;
+        while (true)
+        {
+            if (TryLoadCurrentNotes(out List<Note> savedNotes))
+            {
+                notes = savedNotes;
+                break;
+            }
+            else if (!Backup.TryRestoreNextBackup())
+            {
+                notes = [];
+                status = LoadStatus.Failed;
+                break;
+            }
+            else
+            {
+                status = LoadStatus.Recovered;
+            }
+        }
+        return status;
+    }
+
+    private bool TryLoadCurrentNotes(out List<Note> notes)
+    {
+        try
+        {
+            string fileContents = File.ReadAllText(saveFilePath);
+            notes = JsonSerializer.Deserialize<List<Note>>(fileContents)!;
+            if (notes.Count == 0)
+            {
+                logger.Log("No notes found in save file. Defaulting to single empty note.");
+                notes = [new Note()];
+            }
+            logger.Log($"Loaded [{notes.Count}] notes from save file.");
+            return true;
+        }
+        catch (Exception e)
+        {
+            logger.Log($"Failed to load notes from JSON file. Cause: [{e}].");
+            notes = [];
+            return false;
+        }
     }
 
     private void OnTimerElapsed(object? sender, ElapsedEventArgs e)
@@ -113,6 +208,12 @@ public sealed class Store
         logger.Log($"Applying update instruction to note: [{note.Id}].");
 
         int index = notes.FindIndex(n => n.Id == note.Id);
+        if (index == -1)
+        {
+            logger.Log($"Could not apply update instruction to note with ID [{note.Id}] because said note could not be found.");
+            return;
+        }
+
         notes[index] = (Note)note.Clone();
     }
 
@@ -132,73 +233,11 @@ public sealed class Store
         OnNoteDeleted?.Invoke((Note)noteToDelete.Clone());
     }
 
-    public void LoadNotes()
-    {
-        lock (SyncLock)
-        {
-            if (isInitialized)
-            {
-                return;
-            }
-
-            isInitialized = true;
-
-            logger.Log($"Loading notes from save file [{saveFilePath}].");
-            if (!File.Exists(saveFilePath))
-            {
-                logger.Log("Save file path not found. Defaulting to single empty note.");
-                notes = [new Note()];
-            }
-            else
-            {
-                while (!TryLoadCurrentNotes())
-                {
-                    if (!Backup.RestoreNote())
-                    {
-                        notes = [new Note()];
-                        break;
-                    }
-                }
-            }
-
-            Backup.BackupNotes();
-
-            if (OnNoteCreated != null)
-            {
-                foreach (Note note in notes)
-                {
-                    OnNoteCreated.Invoke((Note)note.Clone());
-                }
-            }
-        }
-    }
-
-    private bool TryLoadCurrentNotes()
-    {
-        try
-        {
-            string fileContents = File.ReadAllText(saveFilePath);
-            notes = JsonSerializer.Deserialize<List<Note>>(fileContents)!;
-            if (notes.Count == 0)
-            {
-                logger.Log("No notes found in save file. Defaulting to single empty note.");
-                notes = [new Note()];
-            }
-            logger.Log($"Loaded [{notes.Count}] notes from save file.");
-            return true;
-        }
-        catch (Exception e)
-        {
-            logger.Log($"Failed to load notes from JSON file. Cause: [{e}].");
-            return false;
-        }
-    }
-
     public void QueueCreateNote()
     {
         lock (SyncLock)
         {
-            pendingUpdates[CreateNewNoteInstructionId] = new(InstructionType.Create, new Note());
+            pendingUpdates[CreateNewNoteInstructionId] = new UpdateInstruction(InstructionType.Create, new Note());
         }
     }
 
@@ -212,14 +251,8 @@ public sealed class Store
                     + "Update will be ignored.");
                 return;
             }
-            else if (IsNoteScheduledForCreation(note))
-            {
-                logger.Log($"An update for note [{note.Id}] was requested but it is in the process of being created. "
-                    + "Update will be ignored.");
-                return;
-            }
 
-            pendingUpdates[note.Id] = new(InstructionType.Update, (Note)note.Clone());
+            pendingUpdates[note.Id] = new UpdateInstruction(InstructionType.Update, (Note)note.Clone());
         }
     }
 
@@ -227,22 +260,11 @@ public sealed class Store
     {
         lock (SyncLock)
         {
-            if (IsNoteScheduledForCreation(note))
-            {
-                logger.Log($"A deletion request for note [{note.Id}] was requested but the note is scheduled for creation. "
-                    + "Deletion request will be ignored.");
-                return;
-            }
-
-            pendingUpdates[note.Id] = new(InstructionType.Delete, (Note)note.Clone());
+            pendingUpdates[note.Id] = new UpdateInstruction(InstructionType.Delete, (Note)note.Clone());
         }
     }
 
     private bool IsNoteScheduledForDeletion(Note note)
         => pendingUpdates.TryGetValue(note.Id, out UpdateInstruction? existing)
             && existing.UpdateType == InstructionType.Delete;
-
-    private bool IsNoteScheduledForCreation(Note note)
-        => pendingUpdates.TryGetValue(note.Id, out UpdateInstruction? existing)
-            && existing.UpdateType == InstructionType.Create;
 }

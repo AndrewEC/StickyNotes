@@ -27,8 +27,9 @@ public sealed partial class Backup
     [GeneratedRegex(@"^notes-\d{4}-\d{2}-\d{2}\.json$")]
     private static partial Regex BackupFileNameRegexBuilder();
 
-    public static bool RestoreNote()
+    public static bool TryRestoreNextBackup()
     {
+        logger.Log("Restoring backup...");
         ImmutableArray<BackupSave> backups = FindBackups();
         if (backups.Length == 0)
         {
@@ -41,6 +42,7 @@ public sealed partial class Backup
             try
             {
                 File.Delete(saveFilePath);
+                logger.Log("Removed existing save file.");
             }
             catch (Exception e)
             {
@@ -49,7 +51,11 @@ public sealed partial class Backup
             }
         }
 
-        File.Move(GetMostRecentBackup(backups).Path, saveFilePath);
+        string backupPath = GetMostRecentBackup(backups).Path;
+
+        logger.Log($"Restoring backup from: [{backupPath}].");
+
+        File.Move(backupPath, saveFilePath);
         
         return true;
     }

@@ -40,7 +40,8 @@ public partial class App : Application
         }
 
         WindowManager.Instance.Connect(Store.Instance);
-        Store.Instance.LoadNotes();
+
+        Store.Instance.Initialize();
 
         GlobalWatcher.Instance.WatchForChanges();
 
