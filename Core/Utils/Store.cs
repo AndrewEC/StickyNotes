@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Timers;
 using StickyNotes.Core.Models;
 
@@ -12,9 +13,26 @@ public delegate void NoteCreated(Note note);
 
 public delegate void NoteDeleted(Note note);
 
+#pragma warning disable CA1852
+[JsonSerializable(typeof(Note))]
+[JsonSerializable(typeof(string))]
+[JsonSerializable(typeof(int))]
+[JsonSerializable(typeof(Dimensions))]
+[JsonSerializable(typeof(ColourStyles))]
+[JsonSerializable(typeof(List<Note>))]
+internal partial class NoteContext : JsonSerializerContext
+{
+}
+#pragma warning restore CA1852
+
 #pragma warning disable CA1001
 public sealed class Store
 {
+    private static readonly JsonSerializerOptions NoteSerializerOptions = new()
+    {
+        TypeInfoResolver = NoteContext.Default
+    };
+
     public static readonly Store Instance = new();
 
     private static readonly System.Threading.Lock SyncLock = new();
@@ -116,9 +134,9 @@ public sealed class Store
     private bool TryLoadCurrentNotes(out List<Note> notes)
     {
         try
-        {
+        {   
             string fileContents = File.ReadAllText(saveFilePath);
-            notes = JsonSerializer.Deserialize<List<Note>>(fileContents)!;
+            notes = JsonSerializer.Deserialize<List<Note>>(fileContents, NoteSerializerOptions)!;
             if (notes.Count == 0)
             {
                 logger.Log("No notes found in save file. Defaulting to single empty note.");
@@ -131,7 +149,7 @@ public sealed class Store
         {
             logger.Log($"Failed to load notes from JSON file. Cause: [{e}].");
             notes = [];
-            return false;
+            return true;
         }
     }
 
@@ -181,7 +199,7 @@ public sealed class Store
         }
         else
         {
-            string json = JsonSerializer.Serialize(notes);
+            string json = JsonSerializer.Serialize(notes, NoteSerializerOptions);
             File.WriteAllText(saveFilePath, json);
         }
     }
