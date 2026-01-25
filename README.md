@@ -5,8 +5,9 @@ A bare bones sticky note implementation written in .NET Core.
 * Ability to create, delete, colour, and re-arrange sticky notes.
 * Notes are alt-tabbable.
 * Automated daily backup and restoration in case of corrupt data.
-    * Notes are saved to a single local JSON file.
+    * Notes are only saved locally.
 * Taskbar icon to access useful functions such as recovering notes lost off screen.
+* Ahead-of-Time (AOT) compatible.
 
 ### Screenshots
 
