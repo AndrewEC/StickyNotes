@@ -1,3 +1,3 @@
 namespace StickyNotes.Core.Models;
 
-public record UpdateInstruction(InstructionType UpdateType, Note Note);
+public record class UpdateInstruction(InstructionType UpdateType, Note Note);

@@ -22,13 +22,6 @@ public partial class MainWindowViewModel : ViewModelBase
     private bool mousePressed;
     private Point? currentPoint;
 
-    private string body = string.Empty;
-
-    private bool isColourOptionVisible;
-    private bool isPink;
-    private bool isBlue;
-    private bool isGreen;
-
     public MainWindowViewModel(Window parentWindow, Note note)
     {
         this.note = note;
@@ -58,34 +51,34 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public bool IsColourOptionVisible
     {
-        get => isColourOptionVisible;
-        set => this.RaiseAndSetIfChanged(ref isColourOptionVisible, value);
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     public bool IsPink
     {
-        get => isPink;
-        set => this.RaiseAndSetIfChanged(ref isPink, value);
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     public bool IsBlue
     {
-        get => isBlue;
-        set => this.RaiseAndSetIfChanged(ref isBlue, value);
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     public bool IsGreen
     {
-        get => isGreen;
-        set => this.RaiseAndSetIfChanged(ref isGreen, value);
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     public string Body
     {
-        get => body;
+        get;
         set
         {
-            this.RaiseAndSetIfChanged(ref body, value);
+            this.RaiseAndSetIfChanged(ref field, value);
             note.Body = value;
             Store.Instance.QueueUpdateNote(note);
         }
@@ -152,10 +145,12 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void PersistNoteDimensions()
     {
-        note.NoteWindowDimensions.X = parentWindow.Position.X;
-        note.NoteWindowDimensions.Y = parentWindow.Position.Y;
-        note.NoteWindowDimensions.Width = (int)parentWindow.Width;
-        note.NoteWindowDimensions.Height = (int)parentWindow.Height;
+        note.NoteWindowDimensions = new Dimensions(
+            (int)parentWindow.Width,
+            (int)parentWindow.Height,
+            parentWindow.Position.X,
+            parentWindow.Position.Y
+        );
         Store.Instance.QueueUpdateNote(note);
     }
 
