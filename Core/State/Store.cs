@@ -1,4 +1,4 @@
-namespace StickyNotes.Core.Utils;
+namespace StickyNotes.Core.State;
 
 using System;
 using System.Collections.Generic;
@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Timers;
 using StickyNotes.Core.Models;
+using StickyNotes.Core.Utils;
 
 public delegate void NoteCreated(Note note);
 

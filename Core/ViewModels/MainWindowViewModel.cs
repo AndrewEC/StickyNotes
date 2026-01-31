@@ -9,6 +9,7 @@ using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
 using ReactiveUI;
 using StickyNotes.Core.Models;
+using StickyNotes.Core.State;
 using StickyNotes.Core.Utils;
 
 public partial class MainWindowViewModel : ViewModelBase
@@ -50,24 +51,6 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     public bool IsColourOptionVisible
-    {
-        get;
-        set => this.RaiseAndSetIfChanged(ref field, value);
-    }
-
-    public bool IsPink
-    {
-        get;
-        set => this.RaiseAndSetIfChanged(ref field, value);
-    }
-
-    public bool IsBlue
-    {
-        get;
-        set => this.RaiseAndSetIfChanged(ref field, value);
-    }
-
-    public bool IsGreen
     {
         get;
         set => this.RaiseAndSetIfChanged(ref field, value);
@@ -186,7 +169,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void SetNoteColour(string value)
     {
-        logger.Log($"Setting note colour to: [{value}]");
+        logger.Log($"Setting note colour from string: [{value}]");
 
         if (Enum.TryParse(value, out ColourStyles style))
         {
@@ -200,22 +183,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void SetNoteColour(ColourStyles style)
     {
-        IsPink = false;
-        IsBlue = false;
-        IsGreen = false;
-
-        switch (style)
-        {
-            case ColourStyles.Pink:
-                IsPink = true;
-                break;
-            case ColourStyles.Blue:
-                IsBlue = true;
-                break;
-            case ColourStyles.Green:
-                IsGreen = true;
-                break;
-        }
+        logger.Log($"Setting note colour from enum: [{style}].");
+        Palettes.Palette palette = Palettes.GetPalette(style);
+        parentWindow.Resources["LightBrush"] = palette.LightBrush;
+        parentWindow.Resources["DarkBrush"] = palette.DarkBrush;
 
         note.ColourStyle = style;
         Store.Instance.QueueUpdateNote(note);

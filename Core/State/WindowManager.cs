@@ -1,4 +1,4 @@
-namespace StickyNotes.Core.Utils;
+namespace StickyNotes.Core.State;
 
 using System.Collections.Generic;
 using Avalonia.Threading;

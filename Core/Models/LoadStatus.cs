@@ -1,4 +1,4 @@
-namespace StickyNotes.Core.Utils;
+namespace StickyNotes.Core.Models;
 
 public enum LoadStatus
 {

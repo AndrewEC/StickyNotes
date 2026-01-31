@@ -1,8 +1,9 @@
-namespace StickyNotes.Core.Utils;
+namespace StickyNotes.Core.State;
 
 using System;
 using System.Diagnostics;
 using System.IO;
+using StickyNotes.Core.Utils;
 
 #pragma warning disable CA1001
 public class GlobalWatcher

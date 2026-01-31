@@ -5,6 +5,12 @@
         <Setter Property="CornerRadius" Value="0" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="10" />
+
+        <Setter Property="Background" Value="{DynamicResource DarkBrush}" />
+
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource LightBrush}" />
+        </Style>
     </Style>
 
     <Style Selector="Button.MenuButtonPink">
@@ -34,6 +40,8 @@
     <Style Selector="TextBox.MainInput">
         <Setter Property="CornerRadius" Value="0" />
         <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Background" Value="{DynamicResource LightBrush}" />
+        <Setter Property="SelectionBrush" Value="{DynamicResource DarkBrush}" />
 
         <Style Selector="^:focus">
             <Setter Property="CornerRadius" Value="0" />
@@ -41,75 +49,20 @@
 
             <Style Selector="^ /template/ Border#PART_BorderElement">
                 <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Background" Value="{DynamicResource LightBrush}" />
             </Style>
         </Style>
-    </Style>
-
-    <Style Selector="TextBox.MainInputPink">
-        <Setter Property="Background" Value="#FFE6FF" />
-        <Setter Property="SelectionBrush" Value="#FFA8B9FF" />
 
         <Style Selector="^:pointerover">
             <Style Selector="^ /template/ Border#PART_BorderElement">
-                <Setter Property="Background" Value="#FFE6FF" />
-            </Style>
-        </Style>
-
-        <Style Selector="^:focus">
-            <Style Selector="^ /template/ Border#PART_BorderElement">
-                <Setter Property="Background" Value="#FFE6FF" />
-            </Style>
-        </Style>
-    </Style>
-
-    <Style Selector="TextBox.MainInputBlue">
-        <Setter Property="Background" Value="#ccddff" />
-        <Setter Property="SelectionBrush" Value="#99bbff" />
-
-        <Style Selector="^:pointerover">
-            <Style Selector="^ /template/ Border#PART_BorderElement">
-                <Setter Property="Background" Value="#ccddff" />
-            </Style>
-        </Style>
-
-        <Style Selector="^:focus">
-            <Style Selector="^ /template/ Border#PART_BorderElement">
-                <Setter Property="Background" Value="#ccddff" />
-            </Style>
-        </Style>
-    </Style>
-
-    <Style Selector="TextBox.MainInputGreen">
-        <Setter Property="Background" Value="#ccffcc" />
-        <Setter Property="SelectionBrush" Value="#99ff99" />
-
-        <Style Selector="^:pointerover">
-            <Style Selector="^ /template/ Border#PART_BorderElement">
-                <Setter Property="Background" Value="#ccffcc" />
-            </Style>
-        </Style>
-
-        <Style Selector="^:focus">
-            <Style Selector="^ /template/ Border#PART_BorderElement">
-                <Setter Property="Background" Value="#ccffcc" />
+                <Setter Property="Background" Value="{DynamicResource LightBrush}" />
             </Style>
         </Style>
     </Style>
 
     <Style Selector="StackPanel.MenuBar">
         <Setter Property="Orientation" Value="Horizontal" />
-    </Style>
-
-    <Style Selector="StackPanel.MenuBarPink">
-        <Setter Property="Background" Value="#FFCCFF" />
-    </Style>
-
-    <Style Selector="StackPanel.MenuBarBlue">
-        <Setter Property="Background" Value="#99bbff" />
-    </Style>
-
-    <Style Selector="StackPanel.MenuBarGreen">
-        <Setter Property="Background" Value="#99ff99" />
+        <Setter Property="Background" Value="{DynamicResource DarkBrush}" />
     </Style>
 
     <Style Selector="StackPanel.ColourOptions">

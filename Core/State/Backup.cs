@@ -1,4 +1,4 @@
-namespace StickyNotes.Core.Utils;
+namespace StickyNotes.Core.State;
 
 using System;
 using System.Collections.Immutable;
@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using StickyNotes.Core.Utils;
 
 public sealed partial class Backup
 {

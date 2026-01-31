@@ -20,38 +20,34 @@
     <Window.Styles>
         <StyleInclude Source="/Core/Styles/Styles.axaml" />
     </Window.Styles>
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <MergeResourceInclude Source="/Core/Styles/Resources.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
     
     <DockPanel>
         <StackPanel
             DockPanel.Dock="Top"
-            Classes.MenuBarPink="{Binding IsPink}"
-            Classes.MenuBarBlue="{Binding IsBlue}"
-            Classes.MenuBarGreen="{Binding IsGreen}"
             Classes="MenuBar"
             x:Name="ClickDragPanel">
 
             <Button
-                Classes.MenuButtonPink="{Binding IsPink}"
-                Classes.MenuButtonBlue="{Binding IsBlue}"
-                Classes.MenuButtonGreen="{Binding IsGreen}"
                 Classes="MenuButton"
                 Content="&#xF014;"
                 FontFamily="{StaticResource FontAwesome}"
                 Command="{Binding ConfirmDeleteNoteCommand}" />
 
             <Button
-                Classes.MenuButtonPink="{Binding IsPink}"
-                Classes.MenuButtonBlue="{Binding IsBlue}"
-                Classes.MenuButtonGreen="{Binding IsGreen}"
                 Classes="MenuButton"
                 Content="&#x002B;"
                 FontFamily="{StaticResource FontAwesome}"
                 Command="{Binding CreateNoteCommand}" />
             
             <Button
-                Classes.MenuButtonPink="{Binding IsPink}"
-                Classes.MenuButtonBlue="{Binding IsBlue}"
-                Classes.MenuButtonGreen="{Binding IsGreen}"
                 Classes="MenuButton"
                 Content="&#xF150;"
                 FontFamily="{StaticResource FontAwesome}"
@@ -59,9 +55,6 @@
                 IsVisible="{Binding !IsColourOptionVisible}" />
             
             <Button
-                Classes.MenuButtonPink="{Binding IsPink}"
-                Classes.MenuButtonBlue="{Binding IsBlue}"
-                Classes.MenuButtonGreen="{Binding IsGreen}"
                 Classes="MenuButton"
                 Content="&#xF151;"
                 FontFamily="{StaticResource FontAwesome}"
@@ -93,9 +86,6 @@
             </StackPanel>
 
             <TextBox
-                Classes.MainInputPink="{Binding IsPink}"
-                Classes.MainInputBlue="{Binding IsBlue}"
-                Classes.MainInputGreen="{Binding IsGreen}"
                 Classes="MainInput"
                 x:Name="MainInputBox"
                 Text="{Binding Body}"
