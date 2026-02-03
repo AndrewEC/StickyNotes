@@ -48,19 +48,23 @@ public sealed class Store
 
     private readonly ConsoleLogger<Store> logger = new();
     private readonly string saveFilePath = StickyNotePaths.GetSaveFilePath();
-    private readonly Timer timer;
     private readonly Dictionary<string, UpdateInstruction> pendingUpdates = [];
 
+    private Timer? debounceTimer;
     private bool isInitialized;
     private List<Note> notes = [];
 
-    private Store()
+    private Store() { }
+
+    private void StartDebounceTimer()
     {
-        timer = new Timer(100);
-        timer.Elapsed += OnTimerElapsed;
-        timer.AutoReset = true;
-        timer.Enabled = true;
-        timer.Start();
+        debounceTimer?.Dispose();
+        debounceTimer = null;
+
+        debounceTimer = new Timer(300);
+        debounceTimer.Elapsed += OnTimerElapsed;
+        debounceTimer.Enabled = true;
+        debounceTimer.Start();
     }
 
     public void Initialize()
@@ -156,13 +160,18 @@ public sealed class Store
 
     private void OnTimerElapsed(object? sender, ElapsedEventArgs e)
     {
-        if (sender != timer)
+        if (sender != debounceTimer)
         {
             return;
         }
 
+        logger.Log("Debounce timer ticked.");
+
         lock (SyncLock)
         {
+            debounceTimer?.Dispose();
+            debounceTimer = null;
+
             ApplyPendingUpdates();
         }
     }
@@ -257,6 +266,7 @@ public sealed class Store
         lock (SyncLock)
         {
             pendingUpdates[CreateNewNoteInstructionId] = new UpdateInstruction(InstructionType.Create, new Note());
+            StartDebounceTimer();
         }
     }
 
@@ -272,6 +282,7 @@ public sealed class Store
             }
 
             pendingUpdates[note.Id] = new UpdateInstruction(InstructionType.Update, (Note)note.Clone());
+            StartDebounceTimer();
         }
     }
 
@@ -280,6 +291,7 @@ public sealed class Store
         lock (SyncLock)
         {
             pendingUpdates[note.Id] = new UpdateInstruction(InstructionType.Delete, (Note)note.Clone());
+            StartDebounceTimer();
         }
     }
 
