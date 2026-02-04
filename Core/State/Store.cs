@@ -29,6 +29,7 @@ internal partial class NoteContext : JsonSerializerContext
 #pragma warning disable CA1001
 public sealed class Store
 {
+    private static readonly int DebounceTime = 5_000;
     private static readonly JsonSerializerOptions NoteSerializerOptions = new()
     {
         TypeInfoResolver = NoteContext.Default
@@ -61,7 +62,7 @@ public sealed class Store
         debounceTimer?.Dispose();
         debounceTimer = null;
 
-        debounceTimer = new Timer(300);
+        debounceTimer = new Timer(DebounceTime);
         debounceTimer.Elapsed += OnTimerElapsed;
         debounceTimer.Enabled = true;
         debounceTimer.Start();
@@ -266,7 +267,7 @@ public sealed class Store
         lock (SyncLock)
         {
             pendingUpdates[CreateNewNoteInstructionId] = new UpdateInstruction(InstructionType.Create, new Note());
-            StartDebounceTimer();
+            ApplyPendingUpdates();
         }
     }
 
@@ -291,7 +292,7 @@ public sealed class Store
         lock (SyncLock)
         {
             pendingUpdates[note.Id] = new UpdateInstruction(InstructionType.Delete, (Note)note.Clone());
-            StartDebounceTimer();
+            ApplyPendingUpdates();
         }
     }
 
