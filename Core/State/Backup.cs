@@ -47,7 +47,7 @@ public sealed partial class Backup
             }
             catch (Exception e)
             {
-                logger.Log($"Failed to restore backup because current save file could not be deleted. Cause: [{e}].");
+                logger.Error($"Failed to restore backup because current save file could not be deleted.", e);
                 return false;
             }
         }
@@ -98,7 +98,7 @@ public sealed partial class Backup
         }
         catch (Exception e)
         {
-            logger.Log($"Failed to backup file to [{backupFilePath}]. Cause: [{e.Message}].");
+            logger.Error($"Failed to backup file to [{backupFilePath}].", e);
             return;
         }
 
@@ -126,19 +126,45 @@ public sealed partial class Backup
 
         logger.Log($"Deleting oldest backup file: [{oldestBackup.Path}].");
 
-        File.Delete(oldestBackup.Path);
+        try
+        {
+            File.Delete(oldestBackup.Path);
+        }
+        catch (Exception e)
+        {
+            logger.Error($"Failed to delete backup file: [{oldestBackup.Path}].", e);
+        }
     }
 
     private static ImmutableArray<BackupSave> FindBackups()
         => Directory.GetFiles(StickyNotePaths.CreateAndGetDataDir())
             .Where(path => BackupFileNameRegex.IsMatch(Path.GetFileName(path)))
-            .Select(path => new BackupSave(path, ParseDateTime(path)))
+            .Select(path =>
+            {
+                if (!ParseDateTime(path, out DateTime dateTime))
+                {
+                    return null;
+                }
+                return new BackupSave(path, dateTime);
+            })
+            .Where(parsed => parsed != null)
+            .Select(parsed => parsed!)
             .ToImmutableArray();
 
-    private static DateTime ParseDateTime(string path)
+    private static bool ParseDateTime(string path, out DateTime dateTime)
     {
         string fileName = Path.GetFileNameWithoutExtension(path);
         string dateComponent = fileName.Substring(fileName.Length - DateLength);
-        return DateTime.Parse(dateComponent, CultureInfo.InvariantCulture);
+        try
+        {
+            dateTime = DateTime.Parse(dateComponent, CultureInfo.InvariantCulture);
+            return true;
+        }
+        catch (Exception e)
+        {
+            logger.Error($"Could not parse DateTime from file: [{path}].", e);
+            dateTime = new DateTime();
+            return false;
+        }
     }
 }

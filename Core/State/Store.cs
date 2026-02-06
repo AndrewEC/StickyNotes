@@ -153,7 +153,7 @@ public sealed class Store
         }
         catch (Exception e)
         {
-            logger.Log($"Failed to load notes from JSON file. Cause: [{e}].");
+            logger.Error($"Failed to load notes from JSON file.", e);
             notes = [];
             return true;
         }

@@ -39,7 +39,7 @@ public class GlobalWatcher
         }
         catch (Exception e)
         {
-            logger.Log($"Could not create new note request file. Cause: [{e.Message}].");
+            logger.Error($"Could not create new note request file.", e);
         }
     }
 
@@ -78,7 +78,7 @@ public class GlobalWatcher
         }
         catch (Exception ex)
         {
-            logger.Log($"Failed to delete new note file. Cause: [{ex}].");
+            logger.Error($"Failed to delete new note file.", ex);
         }
 
         // Call to dispose of the current file watcher and create a new one.
