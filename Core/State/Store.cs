@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Timers;
@@ -50,15 +52,15 @@ public sealed class Store
     private readonly ConsoleLogger<Store> logger = new();
     private readonly string saveFilePath = StickyNotePaths.GetSaveFilePath();
     private readonly Dictionary<string, UpdateInstruction> pendingUpdates = [];
+    private readonly Subject<bool> debounceSubject = new();
 
-    private Timer debounceTimer;
     private bool isInitialized;
     private List<Note> notes = [];
 
     private Store()
     {
-        debounceTimer = new Timer(DebounceTime);
-        debounceTimer.Elapsed += OnTimerElapsed;
+        debounceSubject.Throttle(TimeSpan.FromMilliseconds(DebounceTime))
+            .Subscribe(OnUpdateSubject);
     }
 
     public void Initialize()
@@ -154,19 +156,12 @@ public sealed class Store
         }
     }
 
-    private void OnTimerElapsed(object? sender, ElapsedEventArgs e)
+    private void OnUpdateSubject(bool _)
     {
-        if (sender != debounceTimer)
-        {
-            return;
-        }
-
-        logger.Log("Debounce timer ticked.");
+        logger.Log("Update subject.");
 
         lock (SyncLock)
         {
-            debounceTimer.Stop();
-
             ApplyPendingUpdates();
         }
     }
@@ -286,7 +281,7 @@ public sealed class Store
             }
 
             pendingUpdates[note.Id] = new UpdateInstruction(InstructionType.Update, (Note)note.Clone());
-            debounceTimer.Start();
+            debounceSubject.OnNext(true);
         }
     }
 
