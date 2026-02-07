@@ -1,5 +1,6 @@
 namespace StickyNotes.Core.State;
 
+using System;
 using System.Collections.Generic;
 using Avalonia.Threading;
 using StickyNotes.Core.Models;
@@ -53,7 +54,7 @@ public class WindowManager
         int count = 1;
         foreach (MainWindow window in windows.Values)
         {
-            int position = count * 50;
+            int position = count * 20;
             (window.DataContext as MainWindowViewModel)!.ForceSetPosition(position, position);
             count++;
         }

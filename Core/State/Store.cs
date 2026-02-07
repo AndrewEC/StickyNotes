@@ -51,21 +51,14 @@ public sealed class Store
     private readonly string saveFilePath = StickyNotePaths.GetSaveFilePath();
     private readonly Dictionary<string, UpdateInstruction> pendingUpdates = [];
 
-    private Timer? debounceTimer;
+    private Timer debounceTimer;
     private bool isInitialized;
     private List<Note> notes = [];
 
-    private Store() { }
-
-    private void StartDebounceTimer()
+    private Store()
     {
-        debounceTimer?.Dispose();
-        debounceTimer = null;
-
         debounceTimer = new Timer(DebounceTime);
         debounceTimer.Elapsed += OnTimerElapsed;
-        debounceTimer.Enabled = true;
-        debounceTimer.Start();
     }
 
     public void Initialize()
@@ -92,7 +85,7 @@ public sealed class Store
                 status = LoadNotes(out notes);
             }
 
-            Backup.BackupNotes();
+            Backup.TryCreateTodaysBackup();
 
             if (status == LoadStatus.Failed)
             {
@@ -110,6 +103,8 @@ public sealed class Store
                     OnNoteCreated.Invoke((Note)note.Clone());
                 }
             }
+
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive);
         }
     }
 
@@ -170,8 +165,7 @@ public sealed class Store
 
         lock (SyncLock)
         {
-            debounceTimer?.Dispose();
-            debounceTimer = null;
+            debounceTimer.Stop();
 
             ApplyPendingUpdates();
         }
@@ -210,9 +204,18 @@ public sealed class Store
         }
         else
         {
-            string json = JsonSerializer.Serialize(notes, NoteSerializerOptions);
-            File.WriteAllText(saveFilePath, json);
+            try
+            {
+                string json = JsonSerializer.Serialize(notes, NoteSerializerOptions);
+                File.WriteAllText(saveFilePath, json);
+            }
+            catch (Exception e)
+            {
+                logger.Error("Failed to save notes to file.", e);
+            }
         }
+
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive);
     }
 
     private void ApplyCreateInstruction()
@@ -225,7 +228,7 @@ public sealed class Store
             newNote = new();
         }
 
-        notes.Add((Note)newNote.Clone());
+        notes.Add(newNote);
         OnNoteCreated?.Invoke((Note)newNote.Clone());
     }
 
@@ -243,7 +246,7 @@ public sealed class Store
             return;
         }
 
-        notes[index] = (Note)note.Clone();
+        notes[index] = note;
     }
 
     private void ApplyDeleteInstruction(Note note)
@@ -283,7 +286,7 @@ public sealed class Store
             }
 
             pendingUpdates[note.Id] = new UpdateInstruction(InstructionType.Update, (Note)note.Clone());
-            StartDebounceTimer();
+            debounceTimer.Start();
         }
     }
 

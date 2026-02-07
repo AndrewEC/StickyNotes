@@ -74,7 +74,7 @@ public sealed partial class Backup
         return recent;
     }
 
-    public static void BackupNotes()
+    public static void TryCreateTodaysBackup()
     {
         string saveFilePath = StickyNotePaths.GetSaveFilePath();
         if (!File.Exists(saveFilePath))
