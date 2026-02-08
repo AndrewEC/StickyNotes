@@ -1,24 +1,26 @@
-namespace StickyNotes.Core.State;
+namespace StickyNotes.State;
 
-using System;
 using System.Collections.Generic;
 using Avalonia.Threading;
-using StickyNotes.Core.Models;
-using StickyNotes.Core.ViewModels;
-using StickyNotes.Core.Views;
+using StickyNotes.Models;
+using StickyNotes.ViewModels;
+using StickyNotes.Views;
 
-public class WindowManager
+public interface IWindowManager
 {
-    public static readonly WindowManager Instance = new();
+    void CloseAllWindows();
+    void CascadeWindows();
+    void ActivateWindows();
+}
 
+public class WindowManager : IWindowManager
+{
     private readonly Dictionary<string, MainWindow> windows = [];
 
-    private WindowManager() { }
-
-    public void Connect(Store store)
+    public WindowManager(IStore store)
     {
         store.OnNoteCreated += OnNoteCreated;
-        store.OnNoteDeleted += OnNoteDeleted;
+        store.OnNoteDeleted += OnNoteDeleted;   
     }
 
     private void OnNoteDeleted(Note note)

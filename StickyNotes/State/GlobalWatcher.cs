@@ -1,21 +1,29 @@
-namespace StickyNotes.Core.State;
+namespace StickyNotes.State;
 
 using System;
 using System.Diagnostics;
 using System.IO;
-using StickyNotes.Core.Utils;
+using StickyNotes.Utils;
+
+public interface IGlobalWatcher
+{
+    void RequestCreateNewNote();
+    void WatchForChanges();
+}
 
 #pragma warning disable CA1001
-public class GlobalWatcher
+public sealed class GlobalWatcher : IGlobalWatcher
 {
-    public static readonly GlobalWatcher Instance = new();
-
     private readonly ConsoleLogger<GlobalWatcher> logger = new();
+    private readonly IStickyNotePaths stickyNotePaths;
+    private readonly IStore store;
 
     private FileSystemWatcher? watcher;
 
-    private GlobalWatcher()
+    public GlobalWatcher(IStickyNotePaths stickyNotePaths, IStore store)
     {
+        this.stickyNotePaths = stickyNotePaths;
+        this.store = store;
         AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
     }
 
@@ -26,7 +34,7 @@ public class GlobalWatcher
     {
         try
         {
-            string requestNewNoteFilePath = StickyNotePaths.GetRequestNewNoteFilePath();
+            string requestNewNoteFilePath = stickyNotePaths.GetRequestNewNoteFilePath();
 
             logger.Log($"Writing new note request file to: [{requestNewNoteFilePath}].");
             if (File.Exists(requestNewNoteFilePath))
@@ -47,7 +55,7 @@ public class GlobalWatcher
 
     public void WatchForChanges()
     {
-        string dataDir = StickyNotePaths.CreateAndGetDataDir();
+        string dataDir = stickyNotePaths.CreateAndGetDataDir();
 
         logger.Log($"Watching for changes in data directory: [{dataDir}].");
 
@@ -70,7 +78,7 @@ public class GlobalWatcher
 
         logger.Log("Detected new note requested file in data dir. Creating new note.");
 
-        Store.Instance.QueueCreateNote();
+        store.QueueCreateNote();
 
         try
         {

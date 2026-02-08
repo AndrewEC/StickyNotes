@@ -1,4 +1,4 @@
-namespace StickyNotes.Core.State;
+namespace StickyNotes.State;
 
 using System;
 using System.Collections.Immutable;
@@ -6,16 +6,18 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using StickyNotes.Core.Utils;
+using StickyNotes.Utils;
 
-public sealed partial class Backup
+public interface IBackup
 {
-    private sealed class BackupSave(string path, DateTime backupDate)
+    bool TryRestoreNextBackup();
+    void TryCreateTodaysBackup();
+}
+
+public sealed partial class Backup(IStickyNotePaths stickyNotePaths) : IBackup
+{
+    private sealed record class BackupSave(string Path, DateTime BackupDate)
     {
-        public readonly string Path = path;
-
-        public readonly DateTime BackupDate = backupDate;
-
         public bool IsOlderThan(BackupSave other)
             => BackupDate.CompareTo(other.BackupDate) < 0;
     }
@@ -25,10 +27,13 @@ public sealed partial class Backup
     private static readonly int DateLength = 10;
     private static readonly Regex BackupFileNameRegex = BackupFileNameRegexBuilder();
 
+    // Backup files names are in the format "notes-yyyy-MM-dd.json"
     [GeneratedRegex(@"^notes-\d{4}-\d{2}-\d{2}\.json$")]
     private static partial Regex BackupFileNameRegexBuilder();
 
-    public static bool TryRestoreNextBackup()
+    private readonly IStickyNotePaths stickyNotePaths = stickyNotePaths;
+
+    public bool TryRestoreNextBackup()
     {
         logger.Log("Restoring backup...");
         ImmutableArray<BackupSave> backups = FindBackups();
@@ -37,7 +42,7 @@ public sealed partial class Backup
             return false;
         }
 
-        string saveFilePath = StickyNotePaths.GetSaveFilePath();
+        string saveFilePath = stickyNotePaths.GetSaveFilePath();
         if (File.Exists(saveFilePath))
         {
             try
@@ -74,16 +79,16 @@ public sealed partial class Backup
         return recent;
     }
 
-    public static void TryCreateTodaysBackup()
+    public void TryCreateTodaysBackup()
     {
-        string saveFilePath = StickyNotePaths.GetSaveFilePath();
+        string saveFilePath = stickyNotePaths.GetSaveFilePath();
         if (!File.Exists(saveFilePath))
         {
             logger.Log($"Save file could not be found at [{saveFilePath}]. No backup will be made.");
             return;
         }
 
-        string backupFilePath = StickyNotePaths.GetTodaysBackupSaveFilePath();
+        string backupFilePath = stickyNotePaths.GetTodaysBackupSaveFilePath();
         if (File.Exists(backupFilePath))
         {
             logger.Log($"Today's backup has already been created. No backup will be made.");
@@ -105,15 +110,17 @@ public sealed partial class Backup
         TrimBackups();
     }
 
-    private static void TrimBackups()
+    private void TrimBackups()
     {
         ImmutableArray<BackupSave> backups = FindBackups();
+        logger.Log($"[{backups.Length}] backups found.");
         if (backups.Length <= MaxNumberOfBackups)
         {
+            logger.Log("No backups will be trimmed.");
             return;
         }
 
-        logger.Log($"[{backups.Length}] backups found. Oldest will be deleted.");
+        logger.Log($"Trimming oldest backup.");
 
         BackupSave oldestBackup = backups[0];
         for (int i = 1; i < backups.Length; i++)
@@ -136,8 +143,8 @@ public sealed partial class Backup
         }
     }
 
-    private static ImmutableArray<BackupSave> FindBackups()
-        => Directory.GetFiles(StickyNotePaths.CreateAndGetDataDir())
+    private ImmutableArray<BackupSave> FindBackups()
+        => Directory.GetFiles(stickyNotePaths.CreateAndGetDataDir())
             .Where(path => BackupFileNameRegex.IsMatch(Path.GetFileName(path)))
             .Select(path =>
             {

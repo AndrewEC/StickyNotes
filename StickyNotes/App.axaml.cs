@@ -5,8 +5,9 @@ using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using StickyNotes.Core.State;
-using StickyNotes.Core.Utils;
+using StickyNotes.Injection;
+using StickyNotes.State;
+using StickyNotes.Utils;
 
 public partial class App : Application
 {
@@ -35,16 +36,16 @@ public partial class App : Application
         if (GlobalWatcher.IsStickyNotesAlreadyRunning())
         {
             logger.Log("Sticky notes appears to already be running. Creating new note instead.");
-            GlobalWatcher.Instance.RequestCreateNewNote();
+            ServiceContainer.GetService<IGlobalWatcher>().RequestCreateNewNote();
             Environment.Exit(0);
             return;
         }
 
-        WindowManager.Instance.Connect(Store.Instance);
+        ServiceContainer.GetService<IWindowManager>(); // Initialize the window manager.
 
-        Store.Instance.Initialize();
+        ServiceContainer.GetService<IStore>().Initialize();
 
-        GlobalWatcher.Instance.WatchForChanges();
+        ServiceContainer.GetService<IGlobalWatcher>().WatchForChanges();
 
         base.OnFrameworkInitializationCompleted();
     }
@@ -52,19 +53,20 @@ public partial class App : Application
     public void OnRevealNotesClicked(object? sender, EventArgs args)
     {
         logger.Log("Reveal Notes clicked.");
-        WindowManager.Instance.ActivateWindows();
+        ServiceContainer.GetService<IWindowManager>().ActivateWindows();
     }
 
     public void OnCascadeClicked(object? sender, EventArgs args)
     {
         logger.Log("Cascade Notes clicked. Cascading note windows.");
-        WindowManager.Instance.CascadeWindows();
+        ServiceContainer.GetService<IWindowManager>().CascadeWindows();
     }
 
     public void OnShowDataFolderClicked(object? sender, EventArgs args)
     {
         logger.Log("Show Data Folder clicked. Opening explorer.");
-        Process.Start("explorer.exe", "/select," + StickyNotePaths.GetSaveFilePath());
+        string dataFolder = ServiceContainer.GetService<IStickyNotePaths>().GetSaveFilePath();
+        Process.Start("explorer.exe", "/select," + dataFolder);
     }
 
     public void OnCloseClicked(object? sender, EventArgs args)
@@ -76,7 +78,7 @@ public partial class App : Application
     public void OnNewNoteClicked(object? sender, EventArgs args)
     {
         logger.Log("New Note tray menu clicked. Creating new note.");
-        Store.Instance.QueueCreateNote();
+        ServiceContainer.GetService<IStore>().QueueCreateNote();
     }
 
     private void OnShutdownRequested(object? sender, ShutdownRequestedEventArgs e)
@@ -87,7 +89,7 @@ public partial class App : Application
 
     private void DoShutdownApp()
     {
-        WindowManager.Instance.CloseAllWindows();
+        ServiceContainer.GetService<IWindowManager>().CloseAllWindows();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime lifetime)
         {

@@ -1,6 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:StickyNotes.Core.ViewModels"
+        xmlns:vm="using:StickyNotes.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 
@@ -14,17 +14,17 @@
         Icon="/Assets/stickynotes-logo.ico"
         Title="StickyNotes"
 
-        x:Class="StickyNotes.Core.Views.MainWindow"
+        x:Class="StickyNotes.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel">
     
     <Window.Styles>
-        <StyleInclude Source="/Core/Styles/Styles.axaml" />
+        <StyleInclude Source="/Styles/Styles.axaml" />
     </Window.Styles>
 
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <MergeResourceInclude Source="/Core/Styles/Resources.axaml" />
+                <MergeResourceInclude Source="/Styles/Resources.axaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>

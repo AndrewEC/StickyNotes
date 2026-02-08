@@ -1,4 +1,4 @@
-namespace StickyNotes.Core.Views;
+namespace StickyNotes.Views;
 
 using Avalonia.Controls;
 

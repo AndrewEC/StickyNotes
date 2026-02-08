@@ -1,4 +1,4 @@
-namespace StickyNotes.Core.State;
+namespace StickyNotes.State;
 
 using System;
 using System.Collections.Generic;
@@ -8,9 +8,8 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Timers;
-using StickyNotes.Core.Models;
-using StickyNotes.Core.Utils;
+using StickyNotes.Models;
+using StickyNotes.Utils;
 
 public delegate void NoteCreated(Note note);
 
@@ -28,16 +27,24 @@ internal partial class NoteContext : JsonSerializerContext
 }
 #pragma warning restore CA1852
 
+public interface IStore
+{
+    event NoteCreated? OnNoteCreated;
+    event NoteDeleted? OnNoteDeleted;
+    void Initialize();
+    void QueueCreateNote();
+    void QueueUpdateNote(Note note);
+    void QueueDeleteNote(Note note);
+}
+
 #pragma warning disable CA1001
-public sealed class Store
+public sealed class Store : IStore
 {
     private static readonly int DebounceTime = 5_000;
     private static readonly JsonSerializerOptions NoteSerializerOptions = new()
     {
         TypeInfoResolver = NoteContext.Default
     };
-
-    public static readonly Store Instance = new();
 
     private static readonly System.Threading.Lock SyncLock = new();
     private static readonly string CreateNewNoteInstructionId = "new_note_instruction";
@@ -49,16 +56,21 @@ public sealed class Store
     public event NoteCreated? OnNoteCreated;
     public event NoteDeleted? OnNoteDeleted;
 
+    private readonly IBackup backup;
+
     private readonly ConsoleLogger<Store> logger = new();
-    private readonly string saveFilePath = StickyNotePaths.GetSaveFilePath();
     private readonly Dictionary<string, UpdateInstruction> pendingUpdates = [];
     private readonly Subject<bool> debounceSubject = new();
+    private readonly string saveFilePath;
 
     private bool isInitialized;
     private List<Note> notes = [];
 
-    private Store()
+    public Store(IStickyNotePaths stickyNotePaths, IBackup backup)
     {
+        this.backup = backup;
+        saveFilePath = stickyNotePaths.GetSaveFilePath();
+
         debounceSubject.Throttle(TimeSpan.FromMilliseconds(DebounceTime))
             .Subscribe(OnUpdateSubject);
     }
@@ -87,7 +99,7 @@ public sealed class Store
                 status = LoadNotes(out notes);
             }
 
-            Backup.TryCreateTodaysBackup();
+            backup.TryCreateTodaysBackup();
 
             if (status == LoadStatus.Failed)
             {
@@ -117,17 +129,20 @@ public sealed class Store
         {
             if (TryLoadCurrentNotes(out List<Note> savedNotes))
             {
+                logger.Log($"Successfully loaded [{savedNotes.Count}] notes.");
                 notes = savedNotes;
                 break;
             }
-            else if (!Backup.TryRestoreNextBackup())
+            else if (!backup.TryRestoreNextBackup())
             {
+                logger.Log("Attempting to recover notes from previous backup.");
                 notes = [];
                 status = LoadStatus.Failed;
                 break;
             }
             else
             {
+                logger.Log("Recovered notes from previous backup.");
                 status = LoadStatus.Recovered;
             }
         }
@@ -152,7 +167,7 @@ public sealed class Store
         {
             logger.Error($"Failed to load notes from JSON file.", e);
             notes = [];
-            return true;
+            return false;
         }
     }
 

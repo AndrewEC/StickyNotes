@@ -1,4 +1,4 @@
-﻿namespace StickyNotes.Core.ViewModels;
+﻿namespace StickyNotes.ViewModels;
 
 using System;
 using System.Reactive;
@@ -8,13 +8,15 @@ using Avalonia.Input;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
 using ReactiveUI;
-using StickyNotes.Core.Models;
-using StickyNotes.Core.State;
-using StickyNotes.Core.Utils;
+using StickyNotes.Injection;
+using StickyNotes.Models;
+using StickyNotes.State;
+using StickyNotes.Utils;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly ConsoleLogger<MainWindowViewModel> logger = new();
+    private readonly IStore store;
     private readonly Note note;
     private readonly Window parentWindow;
     private readonly Panel clickDragPanel;
@@ -25,6 +27,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel(Window parentWindow, Note note)
     {
+        store = ServiceContainer.GetService<IStore>();
         this.note = note;
         this.parentWindow = parentWindow;
 
@@ -63,7 +66,7 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             this.RaiseAndSetIfChanged(ref field, value);
             note.Body = value;
-            Store.Instance.QueueUpdateNote(note);
+            store.QueueUpdateNote(note);
         }
     }
 
@@ -134,7 +137,7 @@ public partial class MainWindowViewModel : ViewModelBase
             parentWindow.Position.X,
             parentWindow.Position.Y
         );
-        Store.Instance.QueueUpdateNote(note);
+        store.QueueUpdateNote(note);
     }
 
     private void OnWindowSizeChanged(object? sender, SizeChangedEventArgs e)
@@ -160,10 +163,10 @@ public partial class MainWindowViewModel : ViewModelBase
             return;
         }
 
-        Store.Instance.QueueDeleteNote(note);
+        store.QueueDeleteNote(note);
     }
 
-    private void CreateNote() => Store.Instance.QueueCreateNote();
+    private void CreateNote() => store.QueueCreateNote();
 
     private void ToggleColourOption() => IsColourOptionVisible = !IsColourOptionVisible;
 
@@ -189,6 +192,6 @@ public partial class MainWindowViewModel : ViewModelBase
         parentWindow.Resources["DarkBrush"] = palette.DarkBrush;
 
         note.ColourStyle = style;
-        Store.Instance.QueueUpdateNote(note);
+        store.QueueUpdateNote(note);
     }
 }

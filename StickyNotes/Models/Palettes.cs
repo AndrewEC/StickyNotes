@@ -1,4 +1,4 @@
-namespace StickyNotes.Core.Models;
+namespace StickyNotes.Models;
 
 using System.Collections.Generic;
 using Avalonia.Media;

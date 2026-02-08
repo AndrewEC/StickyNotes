@@ -3,7 +3,7 @@ namespace StickyNotes;
 using System;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
-using StickyNotes.Core.ViewModels;
+using StickyNotes.ViewModels;
 
 public class ViewLocator : IDataTemplate
 {

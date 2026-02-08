@@ -1,4 +1,4 @@
-namespace StickyNotes.Core.Utils;
+namespace StickyNotes.Utils;
 
 using System;
 using System.Globalization;
@@ -35,7 +35,7 @@ public sealed class ConsoleLogger<T>
             CultureInfo.InvariantCulture,
             ErrorMessageFormat,
             message,
-            cause.StackTrace ?? cause.Message
+            cause.Message + " " + cause.StackTrace
         )
     );
 }
