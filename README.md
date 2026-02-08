@@ -19,3 +19,4 @@ A bare bones sticky note implementation written in .NET Core.
 * [Avalonia](https://github.com/AvaloniaUI/Avalonia)
 * [MessageBox.Avalonia](https://github.com/AvaloniaCommunity/MessageBox.Avalonia)
 * [Font-Awesome](https://github.com/FortAwesome/Font-Awesome)
+* [Microsoft.Extensions.DependencyInjection](https://www.nuget.org/packages/Microsoft.Extensions.DependencyInjection/)
