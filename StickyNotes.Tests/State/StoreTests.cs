@@ -36,6 +36,9 @@ public sealed class StoreTests
     [TearDown]
     public void TearDown()
     {
+        mockBackup.VerifyAll();
+        mockPaths.VerifyAll();
+
         mockPaths.Reset();
         mockBackup.Reset();
     }
@@ -47,7 +50,7 @@ public sealed class StoreTests
         Assert.That(Directory.GetFiles(TestUtils.TestDataDir), Has.Length.EqualTo(1));
 
         mockBackup.Setup(mock => mock.TryCreateTodaysBackup()).Verifiable();
-        mockPaths.Setup(mock => mock.GetSaveFilePath()).Returns(TestUtils.SaveFilePath);
+        mockPaths.Setup(mock => mock.GetSaveFilePath()).Returns(TestUtils.SaveFilePath).Verifiable();
 
         Store store = new(mockPaths.Object, mockBackup.Object);
         EventRecorder recorder = new(store);
@@ -61,8 +64,6 @@ public sealed class StoreTests
         }
 
         AssertNote(recorder.CreatedNotes[0]);
-
-        mockBackup.Verify(mock => mock.TryCreateTodaysBackup(), Times.Once());
     }
 
     [Test]
@@ -87,8 +88,6 @@ public sealed class StoreTests
         }
 
         Assert.That(recorder.CreatedNotes[0].Body, Is.EqualTo(LoadFailedMessage));
-        mockBackup.Verify(mock => mock.TryCreateTodaysBackup(), Times.Once());
-        mockBackup.Verify(mock => mock.TryRestoreNextBackup(), Times.Once());
     }
 
     [Test]
@@ -119,9 +118,6 @@ public sealed class StoreTests
 
         AssertNote(recorder.CreatedNotes[0]);
         Assert.That(recorder.CreatedNotes[1].Body, Is.EqualTo(LoadRecoveredMessage));
-
-        mockBackup.Verify(mock => mock.TryCreateTodaysBackup(), Times.Once());
-        mockBackup.Verify(mock => mock.TryRestoreNextBackup(), Times.Once());
     }
 
     private static void AssertNote(Note note)

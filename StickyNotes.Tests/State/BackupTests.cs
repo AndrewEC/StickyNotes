@@ -32,17 +32,21 @@ public sealed class BackupTests
     [TearDown]
     public void TearDown()
     {
+        mockPaths.VerifyAll();
         mockPaths.Reset();
     }
 
     private void MockSaveFilePath() => mockPaths.Setup(mock => mock.GetSaveFilePath())
-        .Returns(TestUtils.SaveFilePath);
+        .Returns(TestUtils.SaveFilePath)
+        .Verifiable();
 
     private void MockValidBackupFilePath() => mockPaths.Setup(mock => mock.GetTodaysBackupSaveFilePath())
-        .Returns(TestUtils.ValidBackupFilePath);
+        .Returns(TestUtils.ValidBackupFilePath)
+        .Verifiable();
 
     private void MockCreateAndGetDataDir() => mockPaths.Setup(mock => mock.CreateAndGetDataDir())
-        .Returns(TestUtils.TestDataDir);
+        .Returns(TestUtils.TestDataDir)
+        .Verifiable();
 
     [Test]
     public void TryCreateTodaysBackup_ShouldNotCreateBackup_WhenNoSaveFileExists()
@@ -107,7 +111,7 @@ public sealed class BackupTests
             Assert.That(File.Exists(TestUtils.ValidBackupFilePath), Is.False); // Oldest backup. Should be deleted.
             foreach (string backupFilePath in backupFilePaths)
             {
-                Assert.That(File.Exists(backupFilePath), Is.True, $"File not found at: {backupFilePath}");
+                Assert.That(File.Exists(backupFilePath), Is.True, $"File expected but not found at: {backupFilePath}");
             }
         }
     }
@@ -115,9 +119,8 @@ public sealed class BackupTests
     [Test]
     public void TryRestoreTodaysBackup_ShouldRestoreBackup_WhenASingleValidBackupExists()
     {
-        MockSaveFilePath();
-        MockValidBackupFilePath();
         MockCreateAndGetDataDir();
+        MockSaveFilePath();
 
         Assert.That(Directory.GetFiles(TestUtils.TestDataDir), Has.Length.EqualTo(0));
 
@@ -139,8 +142,6 @@ public sealed class BackupTests
     [Test]
     public void TryRestoreTodaysBackup_ShouldNotRestoreBackup_WhenOnlyBackupFileIsInvalid()
     {
-        MockSaveFilePath();
-        MockValidBackupFilePath();
         MockCreateAndGetDataDir();
 
         Assert.That(Directory.GetFiles(TestUtils.TestDataDir), Has.Length.EqualTo(0));
