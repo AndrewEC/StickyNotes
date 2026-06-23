@@ -35,6 +35,7 @@ public interface IStore
     void QueueCreateNote();
     void QueueUpdateNote(Note note);
     void QueueDeleteNote(Note note);
+    void Flush();
 }
 
 #pragma warning disable CA1001
@@ -99,7 +100,10 @@ public sealed class Store : IStore
                 status = LoadNotes(out notes);
             }
 
-            backup.TryCreateTodaysBackup();
+            if (status == LoadStatus.Success || status == LoadStatus.Recovered)
+            {
+                backup.TryCreateTodaysBackup();
+            }
 
             if (status == LoadStatus.Failed)
             {
@@ -122,6 +126,25 @@ public sealed class Store : IStore
         }
     }
 
+    /// <summary>
+    /// The process for loading notes attempts to load the main save
+    /// file from the data directory then, if that fails, restoring a backup
+    /// file then trying to load said backup. This process continues until
+    /// a save has been successfully loaded or when there are no more backups
+    /// to restore.
+    /// <para>
+    /// This assumes that the main save file exists. If no save file exists then
+    /// this should not be invoked.
+    /// </para>
+    /// </summary>
+    /// <param name="notes"></param>
+    /// <returns>
+    /// If the main save is loaded without issue (without needing to restore
+    /// a backup) then the return value is Success. If the main save was corrupt
+    /// and instead the data was loaded from a backup then the status will be
+    /// Recovered. If data could not be loaded from the main save or from any backups
+    /// then the status will be Failed.
+    /// </returns>
     private LoadStatus LoadNotes(out List<Note> notes)
     {
         LoadStatus status = LoadStatus.Success;
@@ -177,11 +200,11 @@ public sealed class Store : IStore
 
         lock (SyncLock)
         {
-            ApplyPendingUpdates();
+            Flush();
         }
     }
 
-    private void ApplyPendingUpdates()
+    public void Flush()
     {
         if (pendingUpdates.Count == 0)
         {
@@ -280,7 +303,7 @@ public sealed class Store : IStore
         lock (SyncLock)
         {
             pendingUpdates[CreateNewNoteInstructionId] = new UpdateInstruction(InstructionType.Create, new Note());
-            ApplyPendingUpdates();
+            Flush();
         }
     }
 
@@ -305,7 +328,7 @@ public sealed class Store : IStore
         lock (SyncLock)
         {
             pendingUpdates[note.Id] = new UpdateInstruction(InstructionType.Delete, (Note)note.Clone());
-            ApplyPendingUpdates();
+            Flush();
         }
     }
 

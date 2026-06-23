@@ -143,6 +143,7 @@ public sealed class BackupTests
     public void TryRestoreTodaysBackup_ShouldNotRestoreBackup_WhenOnlyBackupFileIsInvalid()
     {
         MockCreateAndGetDataDir();
+        MockSaveFilePath();
 
         Assert.That(Directory.GetFiles(TestUtils.TestDataDir), Has.Length.EqualTo(0));
 

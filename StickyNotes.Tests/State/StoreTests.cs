@@ -73,8 +73,8 @@ public sealed class StoreTests
         Assert.That(Directory.GetFiles(TestUtils.TestDataDir), Has.Length.EqualTo(1));
 
         mockBackup.Setup(mock => mock.TryCreateTodaysBackup()).Verifiable();
-        mockBackup.Setup(mock => mock.TryRestoreNextBackup()).Returns(false);
-        mockPaths.Setup(mock => mock.GetSaveFilePath()).Returns(TestUtils.SaveFilePath);
+        mockBackup.Setup(mock => mock.TryRestoreNextBackup()).Returns(false).Verifiable();
+        mockPaths.Setup(mock => mock.GetSaveFilePath()).Returns(TestUtils.SaveFilePath).Verifiable();
 
         Store store = new(mockPaths.Object, mockBackup.Object);
         EventRecorder recorder = new(store);
@@ -97,13 +97,13 @@ public sealed class StoreTests
         TestUtils.CreateFile(TestUtils.ValidBackupFilePath, ValidNoteJson);
         Assert.That(Directory.GetFiles(TestUtils.TestDataDir), Has.Length.EqualTo(2));
 
-        mockPaths.Setup(mock => mock.GetSaveFilePath()).Returns(TestUtils.SaveFilePath);
+        mockPaths.Setup(mock => mock.GetSaveFilePath()).Returns(TestUtils.SaveFilePath).Verifiable();
         mockBackup.Setup(mock => mock.TryCreateTodaysBackup()).Verifiable();
         mockBackup.Setup(mock => mock.TryRestoreNextBackup()).Callback(() =>
         {
             TestUtils.CreateFile(TestUtils.SaveFilePath, ValidNoteJson);
         })
-        .Returns(true);
+        .Returns(true).Verifiable();
 
         Store store = new(mockPaths.Object, mockBackup.Object);
         EventRecorder recorder = new(store);

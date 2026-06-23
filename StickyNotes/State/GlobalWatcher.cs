@@ -30,6 +30,15 @@ public sealed class GlobalWatcher : IGlobalWatcher
     public static bool IsStickyNotesAlreadyRunning()
         => Process.GetProcessesByName(StickyNotePaths.AppName).Length > 1;
 
+    /// <summary>
+    /// Creates an empty file in the StickyNotes data directory. When the new file
+    /// is created an already running instance of StickyNotes will detect the new file
+    /// then create a new empty sticky note window.
+    /// <para>
+    /// This should only be invoked when the user attempts to launch StickyNotes if
+    /// StickyNotes is already running so we don't have two instances of the process.
+    /// </para>
+    /// </summary>
     public void RequestCreateNewNote()
     {
         try

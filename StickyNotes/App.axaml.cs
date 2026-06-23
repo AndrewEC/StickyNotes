@@ -89,6 +89,7 @@ public partial class App : Application
 
     private void DoShutdownApp()
     {
+        ServiceContainer.GetService<IStore>().Flush();
         ServiceContainer.GetService<IWindowManager>().CloseAllWindows();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime lifetime)
