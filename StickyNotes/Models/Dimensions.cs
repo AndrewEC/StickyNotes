@@ -23,6 +23,9 @@ public sealed class Dimensions : ICloneable
 
     public int Y { get; set; } = 200;
 
+    public Dimensions WithAdjustedPosition(int xAdjustment, int yAdjustment)
+        => new(Width, Height, X + xAdjustment, Y + yAdjustment);
+
     public object Clone() => new Dimensions(Width, Height, X, Y);
 
 #pragma warning disable CA1834

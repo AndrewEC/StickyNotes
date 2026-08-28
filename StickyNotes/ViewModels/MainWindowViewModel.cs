@@ -166,7 +166,7 @@ public partial class MainWindowViewModel : ViewModelBase
         store.QueueDeleteNote(note);
     }
 
-    private void CreateNote() => store.QueueCreateNote();
+    private void CreateNote() => store.QueueCreateNote(note);
 
     private void ToggleColourOption() => IsColourOptionVisible = !IsColourOptionVisible;
 

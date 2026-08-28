@@ -33,6 +33,7 @@ public interface IStore
     event NoteDeleted? OnNoteDeleted;
     void Initialize();
     void QueueCreateNote();
+    void QueueCreateNote(Note relativeTo);
     void QueueUpdateNote(Note note);
     void QueueDeleteNote(Note note);
     void Flush();
@@ -158,7 +159,7 @@ public sealed class Store : IStore
             }
             else if (!backup.TryRestoreNextBackup())
             {
-                logger.Log("Attempting to recover notes from previous backup.");
+                logger.Log("Failed to recover notes from previous backup.");
                 notes = [];
                 status = LoadStatus.Failed;
                 break;
@@ -196,7 +197,7 @@ public sealed class Store : IStore
 
     private void OnUpdateSubject(bool _)
     {
-        logger.Log("Update subject.");
+        logger.Log("Update subject. Flushing update queue.");
 
         lock (SyncLock)
         {
@@ -217,7 +218,7 @@ public sealed class Store : IStore
             switch (instruction.UpdateType)
             {
                 case InstructionType.Create:
-                    ApplyCreateInstruction();
+                    ApplyCreateInstruction(instruction.Note);
                     break;
                 case InstructionType.Update:
                     ApplyUpdateInstruction(instruction.Note);
@@ -251,14 +252,14 @@ public sealed class Store : IStore
         GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive);
     }
 
-    private void ApplyCreateInstruction()
+    private void ApplyCreateInstruction(Note relativeTo)
     {
         logger.Log($"Creating new note.");
 
-        Note newNote = new();
+        Note newNote = (Note)relativeTo.Clone();
         while (DoesNoteIdExist(newNote))
         {
-            newNote = new();
+            newNote.Id = Guid.NewGuid().ToString();
         }
 
         notes.Add(newNote);
@@ -298,11 +299,16 @@ public sealed class Store : IStore
         OnNoteDeleted?.Invoke((Note)noteToDelete.Clone());
     }
 
-    public void QueueCreateNote()
+    public void QueueCreateNote() => QueueCreateNote(new Note());
+
+    public void QueueCreateNote(Note relativeTo)
     {
         lock (SyncLock)
         {
-            pendingUpdates[CreateNewNoteInstructionId] = new UpdateInstruction(InstructionType.Create, new Note());
+            Note newNote = (Note)relativeTo.Clone();
+            newNote.Body = "";
+            newNote.NoteWindowDimensions = newNote.NoteWindowDimensions.WithAdjustedPosition(20, 20);
+            pendingUpdates[CreateNewNoteInstructionId] = new UpdateInstruction(InstructionType.Create, newNote);
             Flush();
         }
     }
