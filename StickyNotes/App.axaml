@@ -10,7 +10,7 @@
     </Application.DataTemplates>
 
     <Application.Resources>
-        <FontFamily x:Key="FontAwesome">avares://StickyNotes/Assets/Font Awesome 6 Free-Regular-400.otf#Font Awesome 6 Free</FontFamily>
+        <FontFamily x:Key="FontAwesome">avares://StickyNotes/Assets/Font Awesome 7 Free-Regular-400.otf#Font Awesome 7 Free</FontFamily>
     </Application.Resources>
   
     <Application.Styles>
@@ -22,6 +22,7 @@
             <TrayIcon Icon="/Assets/stickynotes-logo.ico" ToolTipText="StickyNotes">
                 <TrayIcon.Menu>
                     <NativeMenu>
+                        <NativeMenuItem Header="Version 1.0.0, Build 3" IsEnabled="false"/>
                         <NativeMenuItem Header="New Note" Click="OnNewNoteClicked"/>
                         <NativeMenuItem Header="Reveal Notes" Click="OnRevealNotesClicked"/>
                         <NativeMenuItem Header="Cascade Notes" Click="OnCascadeClicked"/>

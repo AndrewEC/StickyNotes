@@ -42,7 +42,7 @@ public interface IStore
 #pragma warning disable CA1001
 public sealed class Store : IStore
 {
-    private static readonly int DebounceTime = 5_000;
+    private static readonly int DebounceTime = 30_000;
     private static readonly JsonSerializerOptions NoteSerializerOptions = new()
     {
         TypeInfoResolver = NoteContext.Default

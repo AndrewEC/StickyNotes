@@ -39,6 +39,7 @@ public class WindowManager : IWindowManager
             window.DataContext = new MainWindowViewModel(window, note);
             window.AttachedToVisualTree += (_, _) => window.Activate();
             window.Show();
+            window.Topmost = note.PinnedToTop;
             windows.Add(note.Id, window);
         });
     }

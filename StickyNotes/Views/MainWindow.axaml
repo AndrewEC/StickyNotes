@@ -39,27 +39,47 @@
                 Classes="MenuButton"
                 Content="&#xF014;"
                 FontFamily="{StaticResource FontAwesome}"
-                Command="{Binding ConfirmDeleteNoteCommand}" />
+                Command="{Binding ConfirmDeleteNoteCommand}"
+                ToolTip.Tip="Delete Note" />
 
             <Button
                 Classes="MenuButton"
-                Content="&#x002B;"
+                Content="&#xf0fe;"
                 FontFamily="{StaticResource FontAwesome}"
-                Command="{Binding CreateNoteCommand}" />
+                Command="{Binding CreateNoteCommand}"
+                ToolTip.Tip="New Note" />
             
             <Button
                 Classes="MenuButton"
                 Content="&#xF150;"
                 FontFamily="{StaticResource FontAwesome}"
                 Command="{Binding ToggleColourOptionCommand}"
-                IsVisible="{Binding !IsColourOptionVisible}" />
+                IsVisible="{Binding !IsColourOptionVisible}"
+                ToolTip.Tip="Select Colour" />
             
             <Button
                 Classes="MenuButton"
                 Content="&#xF151;"
                 FontFamily="{StaticResource FontAwesome}"
                 Command="{Binding ToggleColourOptionCommand}"
-                IsVisible="{Binding IsColourOptionVisible}" />
+                IsVisible="{Binding IsColourOptionVisible}"
+                ToolTip.Tip="Select Colour" />
+            
+            <Button
+                Classes="MenuButton HighlightedMenuButton"
+                Content="&#xf35b;"
+                FontFamily="{StaticResource FontAwesome}"
+                IsVisible="{Binding IsPinnedToTop}"
+                Command="{Binding TogglePinToTopCommand}"
+                ToolTip.Tip="Don't Keep Note on Top" />
+            
+            <Button
+                Classes="MenuButton UnHighlightedMenuButton"
+                Content="&#xf35b;"
+                FontFamily="{StaticResource FontAwesome}"
+                IsVisible="{Binding !IsPinnedToTop}"
+                Command="{Binding TogglePinToTopCommand}"
+                ToolTip.Tip="Keep Note on Top" />
         </StackPanel>
 
         <DockPanel>

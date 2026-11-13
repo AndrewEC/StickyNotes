@@ -32,6 +32,7 @@ public partial class MainWindowViewModel : ViewModelBase
         this.parentWindow = parentWindow;
 
         Body = note.Body;
+        IsPinnedToTop = note.PinnedToTop;
         SetNoteColour(note.ColourStyle);
 
         logger.Log($"Initializing note window from note: [{note}].");
@@ -46,6 +47,7 @@ public partial class MainWindowViewModel : ViewModelBase
         CreateNoteCommand = ReactiveCommand.Create(CreateNote);
         ToggleColourOptionCommand = ReactiveCommand.Create(ToggleColourOption);
         SetNoteColourCommand = ReactiveCommand.Create<string>(SetNoteColour);
+        TogglePinToTopCommand = ReactiveCommand.Create(TogglePinToTop);
 
         clickDragPanel = parentWindow.FindControl<Panel>("ClickDragPanel")!;
         clickDragPanel.PointerPressed += OnPanelPointerPressed;
@@ -54,6 +56,12 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     public bool IsColourOptionVisible
+    {
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
+    }
+
+    public bool IsPinnedToTop
     {
         get;
         set => this.RaiseAndSetIfChanged(ref field, value);
@@ -77,6 +85,8 @@ public partial class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> ToggleColourOptionCommand { get; }
 
     public ReactiveCommand<string, Unit> SetNoteColourCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> TogglePinToTopCommand { get; }
 
     private void OnWindowClosing(object? sender, WindowClosingEventArgs e)
     {
@@ -188,10 +198,18 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         logger.Log($"Setting note colour from enum: [{style}].");
         Palettes.Palette palette = Palettes.GetPalette(style);
-        parentWindow.Resources["LightBrush"] = palette.LightBrush;
-        parentWindow.Resources["DarkBrush"] = palette.DarkBrush;
+        parentWindow.Resources[Palettes.ResourceNames.LightBrush] = palette.LightBrush;
+        parentWindow.Resources[Palettes.ResourceNames.DarkBrush] = palette.DarkBrush;
 
         note.ColourStyle = style;
+        store.QueueUpdateNote(note);
+    }
+
+    private void TogglePinToTop()
+    {
+        note.PinnedToTop = !note.PinnedToTop;
+        IsPinnedToTop = note.PinnedToTop;
+        parentWindow.Topmost = note.PinnedToTop;
         store.QueueUpdateNote(note);
     }
 }

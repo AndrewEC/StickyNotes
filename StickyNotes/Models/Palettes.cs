@@ -16,4 +16,10 @@ public static class Palettes
     }.ToImmutableDictionary();
 
     public static Palette GetPalette(ColourStyles style) => ConfiguredPalettes[style];
+
+    public static class ResourceNames
+    {
+        public static readonly string LightBrush = "LightBrush";
+        public static readonly string DarkBrush = "DarkBrush";
+    }
 }

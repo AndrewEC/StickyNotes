@@ -13,12 +13,15 @@ public sealed class Note : ICloneable
 
     public ColourStyles ColourStyle { get; set; } = ColourStyles.Pink;
 
+    public bool PinnedToTop { get; set; }
+
     public object Clone() => new Note()
     {
         Body = Body,
         Id = Id,
         NoteWindowDimensions = (Dimensions)NoteWindowDimensions.Clone(),
-        ColourStyle = ColourStyle
+        ColourStyle = ColourStyle,
+        PinnedToTop = PinnedToTop
     };
 
     public override string ToString() => new StringBuilder()

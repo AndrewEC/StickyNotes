@@ -13,6 +13,22 @@
         </Style>
     </Style>
 
+    <Style Selector="Button.UnHighlightedMenuButton">
+        <Setter Property="Background" Value="{DynamicResource DarkBrush}" />
+
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource DarkBrush}" />
+        </Style>
+    </Style>
+
+    <Style Selector="Button.HighlightedMenuButton">
+        <Setter Property="Background" Value="{DynamicResource LightBrush}" />
+
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource LightBrush}" />
+        </Style>
+    </Style>
+
     <Style Selector="Button.MenuButtonPink">
         <Setter Property="Background" Value="#FFCCFF" />
 
